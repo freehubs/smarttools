@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SG Tax Calculator — SmartTools</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .tax-input-group {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .tax-input-group > div { flex: 1; min-width: 200px; }
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .summary-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .summary-card .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-top: 0.25rem;
+    }
+    .summary-card .label {
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .resident-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      width: fit-content;
+      margin-bottom: 1.5rem;
+    }
+    .resident-toggle button {
+      padding: 0.5rem 1.25rem;
+      border: none;
+      background: var(--color-bg);
+      color: var(--color-text);
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: background 0.15s ease;
+    }
+    .resident-toggle button.active {
+      background: var(--color-primary);
+      color: #fff;
+    }
+    .highlight-row {
+      background: var(--color-bg);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="../index.html" class="logo">&#9881; SmartTools</a>
+      <a href="../index.html" class="back-link">&larr; All Tools</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="tool-header">
+      <h1>Singapore Tax Calculator</h1>
+      <p>Calculate personal income tax for Year of Assessment 2025 (income earned in 2024).</p>
+    </div>
+
+    <div class="resident-toggle">
+      <button id="btnResident" class="active" onclick="setResidentType('resident')">Tax Resident</button>
+      <button id="btnNonResident" onclick="setResidentType('non-resident')">Non-Resident</button>
+    </div>
+
+    <div class="panel mb-3">
+      <div class="tax-input-group">
+        <div>
+          <label for="income">Annual Chargeable Income (SGD)</label>
+          <input type="number" id="income" placeholder="e.g. 120000" min="0" step="1000"
+            oninput="calculate()">
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="calculate()">Calculate</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="results" class="hidden">
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="label">Total Tax Payable</div>
+          <div class="value" id="totalTax">$0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Effective Tax Rate</div>
+          <div class="value" id="effectiveRate">0%</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">After-Tax Income</div>
+          <div class="value" id="afterTax">$0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Monthly After-Tax</div>
+          <div class="value" id="monthlyAfterTax">$0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 style="font-size:1rem; font-weight:600; margin-bottom:1rem;">Tax Bracket Breakdown</h3>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Chargeable Income Band</th>
+                <th class="number">Rate</th>
+                <th class="number">Taxable Amount</th>
+                <th class="number">Tax for Band</th>
+              </tr>
+            </thead>
+            <tbody id="bracketTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="nonResidentNote" class="alert alert-error mt-2 hidden">
+        Non-residents are taxed at a flat rate of 24% on employment income (or resident rates, whichever is higher) for YA 2025. Director fees, consultant fees, and other income may be taxed at 24%.
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>SmartTools &mdash; <a href="../index.html">Home</a> · Tax rates from <a href="https://www.iras.gov.sg" target="_blank">IRAS</a></p>
+  </footer>
+
+  <script>
+    /*
+     * Singapore YA 2025 resident tax brackets.
+     * Each entry: [upper limit of band, marginal rate, cumulative tax at end of previous band]
+     * Source: https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates
+     */
+    const RESIDENT_BRACKETS = [
+      { from: 0,       to: 20000,    rate: 0    },
+      { from: 20000,   to: 30000,    rate: 0.02 },
+      { from: 30000,   to: 40000,    rate: 0.035 },
+      { from: 40000,   to: 80000,    rate: 0.07 },
+      { from: 80000,   to: 120000,   rate: 0.115 },
+      { from: 120000,  to: 160000,   rate: 0.15 },
+      { from: 160000,  to: 200000,   rate: 0.18 },
+      { from: 200000,  to: 240000,   rate: 0.19 },
+      { from: 240000,  to: 280000,   rate: 0.195 },
+      { from: 280000,  to: 320000,   rate: 0.20 },
+      { from: 320000,  to: 500000,   rate: 0.22 },
+      { from: 500000,  to: 1000000,  rate: 0.23 },
+      { from: 1000000, to: Infinity, rate: 0.24 },
+    ];
+
+    const NON_RESIDENT_RATE = 0.24;
+
+    let residentType = 'resident';
+
+    function setResidentType(type) {
+      residentType = type;
+      document.getElementById('btnResident').classList.toggle('active', type === 'resident');
+      document.getElementById('btnNonResident').classList.toggle('active', type === 'non-resident');
+      document.getElementById('nonResidentNote').classList.toggle('hidden', type === 'resident');
+      calculate();
+    }
+
+    function fmt(n) {
+      return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calculate() {
+      const income = parseFloat(document.getElementById('income').value) || 0;
+      const resultsEl = document.getElementById('results');
+
+      if (income <= 0) {
+        resultsEl.classList.add('hidden');
+        return;
+      }
+
+      resultsEl.classList.remove('hidden');
+
+      if (residentType === 'non-resident') {
+        calculateNonResident(income);
+      } else {
+        calculateResident(income);
+      }
+    }
+
+    function calculateResident(income) {
+      let totalTax = 0;
+      let rows = '';
+
+      RESIDENT_BRACKETS.forEach(bracket => {
+        if (income <= bracket.from) return;
+
+        const taxable = Math.min(income, bracket.to) - bracket.from;
+        const tax = taxable * bracket.rate;
+        totalTax += tax;
+
+        const bandLabel = bracket.to === Infinity
+          ? `Above $${fmt(bracket.from)}`
+          : `$${fmt(bracket.from)} – $${fmt(bracket.to)}`;
+
+        const isActive = income > bracket.from;
+        rows += `<tr class="${isActive && tax > 0 ? 'highlight-row' : ''}">
+          <td>${bandLabel}</td>
+          <td class="number">${(bracket.rate * 100).toFixed(1)}%</td>
+          <td class="number">$${fmt(taxable)}</td>
+          <td class="number">$${fmt(tax)}</td>
+        </tr>`;
+      });
+
+      rows += `<tr style="font-weight:700; border-top:2px solid var(--color-border);">
+        <td>Total</td>
+        <td></td>
+        <td class="number">$${fmt(income)}</td>
+        <td class="number">$${fmt(totalTax)}</td>
+      </tr>`;
+
+      updateUI(income, totalTax, rows);
+    }
+
+    function calculateNonResident(income) {
+      const residentTax = calculateResidentTaxOnly(income);
+      const flatTax = income * NON_RESIDENT_RATE;
+      const totalTax = Math.max(residentTax, flatTax);
+
+      let rows = `<tr>
+        <td>Flat rate (24%)</td>
+        <td class="number">24.0%</td>
+        <td class="number">$${fmt(income)}</td>
+        <td class="number">$${fmt(flatTax)}</td>
+      </tr>
+      <tr>
+        <td>Resident rates (for comparison)</td>
+        <td class="number">—</td>
+        <td class="number">$${fmt(income)}</td>
+        <td class="number">$${fmt(residentTax)}</td>
+      </tr>
+      <tr style="font-weight:700; border-top:2px solid var(--color-border);">
+        <td>Tax Payable (higher of the two)</td>
+        <td></td>
+        <td class="number">$${fmt(income)}</td>
+        <td class="number">$${fmt(totalTax)}</td>
+      </tr>`;
+
+      updateUI(income, totalTax, rows);
+    }
+
+    function calculateResidentTaxOnly(income) {
+      let tax = 0;
+      RESIDENT_BRACKETS.forEach(bracket => {
+        if (income <= bracket.from) return;
+        const taxable = Math.min(income, bracket.to) - bracket.from;
+        tax += taxable * bracket.rate;
+      });
+      return tax;
+    }
+
+    function updateUI(income, totalTax, rows) {
+      document.getElementById('totalTax').textContent = '$' + fmt(totalTax);
+      document.getElementById('effectiveRate').textContent =
+        income > 0 ? (totalTax / income * 100).toFixed(2) + '%' : '0%';
+      document.getElementById('afterTax').textContent = '$' + fmt(income - totalTax);
+      document.getElementById('monthlyAfterTax').textContent = '$' + fmt((income - totalTax) / 12);
+      document.getElementById('bracketTable').innerHTML = rows;
+    }
+  </script>
+</body>
+</html>

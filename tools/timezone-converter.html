@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timezone Converter — SmartTools</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .tz-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .tz-row:last-child { border-bottom: none; }
+    .tz-row .tz-name {
+      min-width: 180px;
+      font-weight: 500;
+    }
+    .tz-row .tz-time {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      flex: 1;
+    }
+    .tz-row .tz-offset {
+      color: var(--color-text-secondary);
+      font-size: 0.85rem;
+      min-width: 70px;
+      text-align: right;
+    }
+    .tz-row .tz-remove {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .tz-row .tz-remove:hover {
+      background: var(--color-bg);
+      color: var(--color-error);
+    }
+    .source-panel {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .source-panel > div { flex: 1; min-width: 200px; }
+    @media (max-width: 600px) {
+      .tz-row .tz-name { min-width: 100px; font-size: 0.85rem; }
+      .tz-row .tz-time { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <a href="../index.html" class="logo">&#9881; SmartTools</a>
+      <a href="../index.html" class="back-link">&larr; All Tools</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div class="tool-header">
+      <h1>Timezone Converter</h1>
+      <p>Enter a time and see it converted across multiple timezones simultaneously.</p>
+    </div>
+
+    <div class="panel mb-3">
+      <div class="source-panel">
+        <div>
+          <label for="sourceTime">Date &amp; Time</label>
+          <input type="datetime-local" id="sourceTime" step="1">
+        </div>
+        <div>
+          <label for="sourceTz">Source Timezone</label>
+          <select id="sourceTz"></select>
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="useNow()">Use Current Time</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-size:1rem; font-weight:600;">Target Timezones</h3>
+        <div class="btn-group">
+          <select id="addTzSelect" style="width:auto;"></select>
+          <button class="btn btn-secondary btn-sm" onclick="addTimezone()">+ Add</button>
+        </div>
+      </div>
+      <div id="tzResults"></div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>SmartTools &mdash; <a href="../index.html">Home</a></p>
+  </footer>
+
+  <script>
+    const TIMEZONES = [
+      { name: 'UTC',                    tz: 'UTC' },
+      { name: 'Singapore (SGT)',        tz: 'Asia/Singapore' },
+      { name: 'China (CST)',            tz: 'Asia/Shanghai' },
+      { name: 'Japan (JST)',            tz: 'Asia/Tokyo' },
+      { name: 'Korea (KST)',           tz: 'Asia/Seoul' },
+      { name: 'India (IST)',            tz: 'Asia/Kolkata' },
+      { name: 'US Pacific (PST/PDT)',   tz: 'America/Los_Angeles' },
+      { name: 'US Eastern (EST/EDT)',   tz: 'America/New_York' },
+      { name: 'US Central (CST/CDT)',   tz: 'America/Chicago' },
+      { name: 'UK (GMT/BST)',           tz: 'Europe/London' },
+      { name: 'Central Europe (CET)',   tz: 'Europe/Berlin' },
+      { name: 'Australia East (AEST)',  tz: 'Australia/Sydney' },
+      { name: 'New Zealand (NZST)',     tz: 'Pacific/Auckland' },
+      { name: 'Thailand (ICT)',         tz: 'Asia/Bangkok' },
+      { name: 'Indonesia West (WIB)',   tz: 'Asia/Jakarta' },
+      { name: 'Vietnam (ICT)',          tz: 'Asia/Ho_Chi_Minh' },
+      { name: 'Philippines (PHT)',      tz: 'Asia/Manila' },
+      { name: 'Brazil (BRT)',           tz: 'America/Sao_Paulo' },
+      { name: 'Dubai (GST)',            tz: 'Asia/Dubai' },
+    ];
+
+    const DEFAULT_TARGETS = [
+      'UTC', 'Asia/Singapore', 'Asia/Shanghai', 'Asia/Tokyo',
+      'America/Los_Angeles', 'America/New_York', 'Europe/London'
+    ];
+
+    let targetTzList = [...DEFAULT_TARGETS];
+
+    const sourceTimeEl = document.getElementById('sourceTime');
+    const sourceTzEl = document.getElementById('sourceTz');
+    const addTzSelectEl = document.getElementById('addTzSelect');
+    const resultsEl = document.getElementById('tzResults');
+
+    function populateSelects() {
+      TIMEZONES.forEach(tz => {
+        sourceTzEl.add(new Option(tz.name, tz.tz));
+        addTzSelectEl.add(new Option(tz.name, tz.tz));
+      });
+      const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const match = TIMEZONES.find(t => t.tz === localTz);
+      if (match) sourceTzEl.value = match.tz;
+      else sourceTzEl.value = 'Asia/Singapore';
+    }
+
+    function useNow() {
+      const now = new Date();
+      const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+      sourceTimeEl.value = local.toISOString().slice(0, 19);
+      convert();
+    }
+
+    function getOffsetLabel(tz, date) {
+      const fmt = new Intl.DateTimeFormat('en', {
+        timeZone: tz,
+        timeZoneName: 'shortOffset'
+      });
+      const parts = fmt.formatToParts(date);
+      const offsetPart = parts.find(p => p.type === 'timeZoneName');
+      return offsetPart ? offsetPart.value : '';
+    }
+
+    function formatInTz(date, tz) {
+      return new Intl.DateTimeFormat('en-GB', {
+        timeZone: tz,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false,
+        weekday: 'short'
+      }).format(date);
+    }
+
+    function convert() {
+      const timeStr = sourceTimeEl.value;
+      if (!timeStr) return;
+
+      const srcTz = sourceTzEl.value;
+      const srcDate = new Date(timeStr);
+
+      const srcFormatted = new Intl.DateTimeFormat('en-US', {
+        timeZone: srcTz,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+      });
+
+      const srcParts = srcFormatted.formatToParts(new Date());
+      const tzOffset = (() => {
+        const inTz = new Date(new Intl.DateTimeFormat('en-US', {
+          timeZone: srcTz,
+          year: 'numeric', month: 'numeric', day: 'numeric',
+          hour: 'numeric', minute: 'numeric', second: 'numeric',
+          hour12: false
+        }).format(new Date()).replace(',', ''));
+        const inUtc = new Date(new Intl.DateTimeFormat('en-US', {
+          timeZone: 'UTC',
+          year: 'numeric', month: 'numeric', day: 'numeric',
+          hour: 'numeric', minute: 'numeric', second: 'numeric',
+          hour12: false
+        }).format(new Date()).replace(',', ''));
+        return inTz - inUtc;
+      })();
+
+      const localDate = new Date(timeStr);
+      const localOffset = localDate.getTimezoneOffset() * 60000;
+      const utcDate = new Date(localDate.getTime() + localOffset - tzOffset);
+
+      let html = '';
+      targetTzList.forEach(tz => {
+        const tzInfo = TIMEZONES.find(t => t.tz === tz);
+        const name = tzInfo ? tzInfo.name : tz;
+        const converted = formatInTz(utcDate, tz);
+        const offset = getOffsetLabel(tz, utcDate);
+
+        html += `<div class="tz-row">
+          <span class="tz-name">${name}</span>
+          <span class="tz-time">${converted}</span>
+          <span class="tz-offset">${offset}</span>
+          <button class="tz-remove" onclick="removeTimezone('${tz}')" title="Remove">&times;</button>
+        </div>`;
+      });
+
+      resultsEl.innerHTML = html || '<p class="text-secondary">No target timezones selected.</p>';
+    }
+
+    function addTimezone() {
+      const tz = addTzSelectEl.value;
+      if (!targetTzList.includes(tz)) {
+        targetTzList.push(tz);
+        convert();
+      }
+    }
+
+    function removeTimezone(tz) {
+      targetTzList = targetTzList.filter(t => t !== tz);
+      convert();
+    }
+
+    populateSelects();
+    useNow();
+
+    sourceTimeEl.addEventListener('input', convert);
+    sourceTzEl.addEventListener('change', convert);
+  </script>
+</body>
+</html>
