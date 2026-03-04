@@ -1,287 +1,1154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SG Tax Calculator — SmartTools</title>
-  <link rel="stylesheet" href="../assets/style.css">
-  <style>
-    .tax-input-group {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-    }
-    .tax-input-group > div { flex: 1; min-width: 200px; }
-    .summary-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .summary-card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      padding: 1.25rem;
-      text-align: center;
-    }
-    .summary-card .value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      margin-top: 0.25rem;
-    }
-    .summary-card .label {
-      font-size: 0.8rem;
-      color: var(--color-text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .resident-toggle {
-      display: flex;
-      gap: 0;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      width: fit-content;
-      margin-bottom: 1.5rem;
-    }
-    .resident-toggle button {
-      padding: 0.5rem 1.25rem;
-      border: none;
-      background: var(--color-bg);
-      color: var(--color-text);
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-family: inherit;
-      transition: background 0.15s ease;
-    }
-    .resident-toggle button.active {
-      background: var(--color-primary);
-      color: #fff;
-    }
-    .highlight-row {
-      background: var(--color-bg);
-      font-weight: 600;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新加坡个人所得税计算器 | Singapore Tax Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 50%, #ede9fe 100%);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; }
+
+  header { text-align: center; margin-bottom: 32px; }
+  header h1 { font-size: 28px; font-weight: 700; color: var(--primary-dark); margin-bottom: 4px; }
+  header p { color: var(--text-secondary); font-size: 14px; }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 16px; font-weight: 600; color: var(--text);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+  }
+
+  .card-title .icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .input-grid.col3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  @media (max-width: 640px) {
+    .input-grid, .input-grid.col3 { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: 1fr 1fr !important; }
+  }
+
+  .field label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--text-secondary); margin-bottom: 5px;
+  }
+
+  .field .hint {
+    font-size: 11px; color: var(--text-tertiary); margin-top: 3px;
+  }
+
+  .input-wrapper { position: relative; display: flex; align-items: center; }
+
+  .input-wrapper .prefix {
+    position: absolute; left: 12px; color: var(--text-tertiary);
+    font-size: 13px; font-weight: 500; pointer-events: none;
+  }
+
+  .input-wrapper input, .input-wrapper select {
+    width: 100%; padding: 10px 12px 10px 48px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-weight: 500; color: var(--text);
+    transition: border-color .2s, box-shadow .2s;
+    background: var(--surface-alt); outline: none;
+  }
+
+  .input-wrapper select { padding-left: 12px; cursor: pointer; appearance: auto; }
+
+  .input-wrapper input:focus, .input-wrapper select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    background: var(--surface);
+  }
+
+  .input-wrapper input::placeholder { color: #cbd5e1; }
+  .input-wrapper input:disabled { background: #f1f5f9; color: var(--text-tertiary); cursor: not-allowed; }
+
+  /* Collapsible relief sections */
+  .relief-section { margin-bottom: 16px; }
+
+  .relief-header {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer; user-select: none;
+    transition: background .15s, border-color .15s;
+  }
+
+  .relief-header:hover { background: #eef2ff; border-color: var(--primary-light); }
+  .relief-header.open { border-radius: 10px 10px 0 0; border-bottom-color: transparent; background: #eef2ff; }
+
+  .relief-header .arrow {
+    font-size: 11px; color: var(--text-tertiary);
+    transition: transform .2s; flex-shrink: 0;
+  }
+
+  .relief-header.open .arrow { transform: rotate(90deg); }
+
+  .relief-header .sec-title { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+
+  .relief-header .sec-amount {
+    font-size: 13px; font-weight: 600; color: var(--primary);
+    min-width: 90px; text-align: right;
+  }
+
+  .relief-body {
+    display: none; padding: 16px;
+    border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 10px 10px; background: var(--surface);
+  }
+
+  .relief-body.open { display: block; animation: slideDown .2s ease; }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .relief-total-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    border-radius: 10px; margin-top: 8px; border: 1px solid #c7d2fe;
+  }
+
+  .relief-total-bar .total-label { font-size: 14px; font-weight: 600; color: var(--primary-dark); }
+  .relief-total-bar .total-val { font-size: 20px; font-weight: 700; color: var(--primary-dark); }
+
+  .relief-cap-warn {
+    font-size: 11px; color: var(--danger); font-weight: 500;
+    margin-top: 6px; text-align: right; display: none;
+  }
+
+  .relief-cap-warn.show { display: block; }
+
+  .toggle-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 8px; font-size: 13px; color: var(--text-secondary);
+  }
+
+  .toggle { position: relative; width: 38px; height: 20px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+
+  .toggle .slider {
+    position: absolute; inset: 0; background: #cbd5e1;
+    border-radius: 20px; cursor: pointer; transition: background .2s;
+  }
+
+  .toggle .slider::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 14px; height: 14px; background: #fff;
+    border-radius: 50%; transition: transform .2s;
+  }
+
+  .toggle input:checked + .slider { background: var(--primary); }
+  .toggle input:checked + .slider::after { transform: translateX(18px); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 32px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: transform .12s, box-shadow .2s, background .2s;
+  }
+
+  .btn:active { transform: scale(.97); }
+
+  .btn-primary {
+    background: var(--primary); color: #fff;
+    box-shadow: 0 2px 8px rgba(99,102,241,.3);
+    margin-top: 20px; width: 100%;
+  }
+
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  .results { display: none; }
+  .results.show { display: block; animation: fadeUp .4s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+
+  .stat-card {
+    background: var(--surface-alt); border-radius: 10px;
+    padding: 14px; text-align: center; border: 1px solid var(--border);
+  }
+
+  .stat-card .label { font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; font-weight: 500; }
+  .stat-card .value { font-size: 20px; font-weight: 700; color: var(--text); }
+  .stat-card .sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+  .stat-card.highlight {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-color: transparent;
+  }
+
+  .stat-card.highlight .label, .stat-card.highlight .sub { color: rgba(255,255,255,.8); }
+  .stat-card.highlight .value { color: #fff; }
+
+  .bracket-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+
+  .bracket-table th {
+    text-align: left; padding: 9px 12px; background: var(--surface-alt);
+    color: var(--text-secondary); font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .5px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .bracket-table th:last-child, .bracket-table td:last-child { text-align: right; }
+
+  .bracket-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .bracket-table tr:last-child td { border-bottom: none; }
+
+  .bracket-table tr.active-bracket td { background: #eef2ff; font-weight: 600; }
+
+  .bracket-table tr.total-row td {
+    border-top: 2px solid var(--primary); font-weight: 700;
+    color: var(--primary-dark); padding-top: 12px;
+  }
+
+  .bar-cell { width: 28%; }
+
+  .bar-bg { height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+
+  .bar-fill {
+    height: 100%; background: var(--primary);
+    border-radius: 4px; transition: width .6s ease;
+  }
+
+  .donut-section {
+    display: flex; align-items: center; justify-content: center;
+    gap: 32px; padding: 8px 0; flex-wrap: wrap;
+  }
+
+  .donut-container { position: relative; width: 170px; height: 170px; flex-shrink: 0; }
+  .donut-container svg { transform: rotate(-90deg); }
+
+  .donut-center {
+    position: absolute; inset: 0; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+  }
+
+  .donut-center .pct { font-size: 26px; font-weight: 700; color: var(--primary-dark); }
+  .donut-center .pct-label { font-size: 11px; color: var(--text-secondary); }
+
+  .legend { display: flex; flex-direction: column; gap: 10px; }
+
+  .legend-item { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+
+  .legend-dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+
+  .legend-item .leg-val { font-weight: 600; margin-left: auto; padding-left: 16px; }
+
+  /* Relief breakdown result table */
+  .relief-result-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+  .relief-result-table td { padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .relief-result-table tr:last-child td { border-bottom: none; }
+  .relief-result-table td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .relief-result-table .rr-cat { color: var(--text-secondary); font-size: 12px; }
+  .relief-result-table .rr-total td {
+    border-top: 2px solid var(--primary); font-weight: 700; color: var(--primary-dark); padding-top: 10px;
+  }
+
+  footer {
+    text-align: center; margin-top: 36px; font-size: 12px;
+    color: var(--text-secondary); line-height: 1.8;
+  }
+</style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="navbar-inner">
-      <a href="../index.html" class="logo">&#9881; SmartTools</a>
-      <a href="../index.html" class="back-link">&larr; All Tools</a>
-    </div>
-  </nav>
 
-  <main class="container">
-    <div class="tool-header">
-      <h1>Singapore Tax Calculator</h1>
-      <p>Calculate personal income tax for Year of Assessment 2025 (income earned in 2024).</p>
-    </div>
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);">
+  <div style="max-width:960px;margin:0 auto;display:flex;align-items:center;gap:12px;">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none;">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:0.9rem;color:var(--text-secondary);text-decoration:none;">&larr; All Tools</a>
+  </div>
+</div>
 
-    <div class="resident-toggle">
-      <button id="btnResident" class="active" onclick="setResidentType('resident')">Tax Resident</button>
-      <button id="btnNonResident" onclick="setResidentType('non-resident')">Non-Resident</button>
-    </div>
+<div class="container">
+  <header>
+    <h1>🇸🇬 新加坡个人所得税计算器</h1>
+    <p>Singapore Personal Income Tax Calculator — YA 2025 / 2026 · 含全部税收减免细项</p>
+  </header>
 
-    <div class="panel mb-3">
-      <div class="tax-input-group">
-        <div>
-          <label for="income">Annual Chargeable Income (SGD)</label>
-          <input type="number" id="income" placeholder="e.g. 120000" min="0" step="1000"
-            oninput="calculate()">
+  <!-- ===== 收入信息 ===== -->
+  <div class="card">
+    <div class="card-title">
+      <span class="icon" style="background:#eef2ff;color:var(--primary)">💰</span>
+      收入信息 Income
+    </div>
+    <div class="input-grid">
+      <div class="field">
+        <label>年薪 Annual Salary</label>
+        <div class="input-wrapper">
+          <span class="prefix">SGD</span>
+          <input id="salary" type="text" inputmode="numeric" placeholder="e.g. 120,000" class="num-input">
         </div>
-        <div>
-          <button class="btn btn-primary" onclick="calculate()">Calculate</button>
+      </div>
+      <div class="field">
+        <label>RSU / 奖金等其他收入</label>
+        <div class="input-wrapper">
+          <span class="prefix">SGD</span>
+          <input id="bonus" type="text" inputmode="numeric" placeholder="0" class="num-input">
+        </div>
+      </div>
+    </div>
+    <div class="toggle-row" style="margin-top:12px;">
+      <label class="toggle">
+        <input type="checkbox" id="isResident" checked>
+        <span class="slider"></span>
+      </label>
+      新加坡税务居民 Tax Resident
+    </div>
+  </div>
+
+  <!-- ===== 税收减免 ===== -->
+  <div class="card" id="reliefCard">
+    <div class="card-title">
+      <span class="icon" style="background:#ecfdf5;color:#059669">🛡️</span>
+      税收减免明细 Tax Reliefs
+      <span style="font-size:11px;font-weight:400;color:var(--text-tertiary);margin-left:auto;">年度上限 $80,000</span>
+    </div>
+
+    <!-- 1. Earned Income Relief -->
+    <div class="relief-section" data-section="earned">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">获得收入减免 Earned Income Relief</span>
+        <span class="sec-amount" id="sec_earned_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="input-grid">
+          <div class="field">
+            <label>年龄 Age (截至上年 12 月 31 日)</label>
+            <div class="input-wrapper">
+              <select id="ageGroup" onchange="updateReliefTotals()">
+                <option value="below55">55 岁以下 ($1,000)</option>
+                <option value="55to59">55 – 59 岁 ($6,000)</option>
+                <option value="60above">60 岁及以上 ($8,000)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>是否有永久身体/精神残障</label>
+            <div class="input-wrapper">
+              <select id="eiDisability" onchange="updateReliefTotals()">
+                <option value="no">否 No</option>
+                <option value="yes">是 Yes</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:8px;">自动计算，无需自行申报</p>
+      </div>
+    </div>
+
+    <!-- 2. CPF Relief -->
+    <div class="relief-section" data-section="cpf">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">公积金减免 CPF Relief (Employee)</span>
+        <span class="sec-amount" id="sec_cpf_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="input-grid">
+          <div class="field">
+            <label>雇员 CPF 缴纳额</label>
+            <div class="input-wrapper">
+              <span class="prefix">SGD</span>
+              <input id="cpfEmployee" type="text" inputmode="numeric" placeholder="自动估算" class="num-input" disabled>
+            </div>
+            <p class="hint">按 20% 员工比例，OW 上限 $6,800/月</p>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <div class="toggle-row" style="margin-top:0;height:42px;">
+              <label class="toggle">
+                <input type="checkbox" id="autoCalcCpf" checked onchange="toggleCpfAuto()">
+                <span class="slider"></span>
+              </label>
+              自动估算 CPF
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div id="results" class="hidden">
-      <div class="summary-cards">
-        <div class="summary-card">
-          <div class="label">Total Tax Payable</div>
-          <div class="value" id="totalTax">$0</div>
-        </div>
-        <div class="summary-card">
-          <div class="label">Effective Tax Rate</div>
-          <div class="value" id="effectiveRate">0%</div>
-        </div>
-        <div class="summary-card">
-          <div class="label">After-Tax Income</div>
-          <div class="value" id="afterTax">$0</div>
-        </div>
-        <div class="summary-card">
-          <div class="label">Monthly After-Tax</div>
-          <div class="value" id="monthlyAfterTax">$0</div>
-        </div>
+    <!-- 3. CPF Cash Top-up Relief -->
+    <div class="relief-section" data-section="cpfTopup">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">公积金现金填补减免 CPF Cash Top-up</span>
+        <span class="sec-amount" id="sec_cpfTopup_amt">$0</span>
       </div>
-
-      <div class="panel">
-        <h3 style="font-size:1rem; font-weight:600; margin-bottom:1rem;">Tax Bracket Breakdown</h3>
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Chargeable Income Band</th>
-                <th class="number">Rate</th>
-                <th class="number">Taxable Amount</th>
-                <th class="number">Tax for Band</th>
-              </tr>
-            </thead>
-            <tbody id="bracketTable"></tbody>
-          </table>
+      <div class="relief-body">
+        <div class="input-grid">
+          <div class="field">
+            <label>自己账户 Self (上限 $8,000)</label>
+            <div class="input-wrapper">
+              <span class="prefix">SGD</span>
+              <input id="cpfTopupSelf" type="text" inputmode="numeric" placeholder="0" class="num-input" onchange="updateReliefTotals()">
+            </div>
+          </div>
+          <div class="field">
+            <label>家人账户 Family (上限 $8,000)</label>
+            <div class="input-wrapper">
+              <span class="prefix">SGD</span>
+              <input id="cpfTopupFamily" type="text" inputmode="numeric" placeholder="0" class="num-input" onchange="updateReliefTotals()">
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div id="nonResidentNote" class="alert alert-error mt-2 hidden">
-        Non-residents are taxed at a flat rate of 24% on employment income (or resident rates, whichever is higher) for YA 2025. Director fees, consultant fees, and other income may be taxed at 24%.
+        <p class="hint" style="margin-top:8px;">合计上限 $16,000/年</p>
       </div>
     </div>
-  </main>
 
-  <footer class="footer">
-    <p>SmartTools &mdash; <a href="../index.html">Home</a> · Tax rates from <a href="https://www.iras.gov.sg" target="_blank">IRAS</a></p>
+    <!-- 4. SRS Relief -->
+    <div class="relief-section" data-section="srs">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">补充退休计划 SRS Relief</span>
+        <span class="sec-amount" id="sec_srs_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="input-grid">
+          <div class="field">
+            <label>SRS 年度缴纳额</label>
+            <div class="input-wrapper">
+              <span class="prefix">SGD</span>
+              <input id="srsContrib" type="text" inputmode="numeric" placeholder="0" class="num-input" onchange="updateReliefTotals()">
+            </div>
+            <p class="hint">公民/PR 上限 $15,300 · 外籍上限 $35,700</p>
+          </div>
+          <div class="field">
+            <label>身份类型</label>
+            <div class="input-wrapper">
+              <select id="srsType" onchange="updateReliefTotals()">
+                <option value="local">公民 / PR ($15,300)</option>
+                <option value="foreign">外籍 Foreigner ($35,700)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Life Insurance Relief -->
+    <div class="relief-section" data-section="lifeIns">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">人寿保险减免 Life Insurance Relief</span>
+        <span class="sec-amount" id="sec_lifeIns_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="field">
+          <label>年保费金额 Annual Premiums Paid</label>
+          <div class="input-wrapper">
+            <span class="prefix">SGD</span>
+            <input id="lifeInsPremium" type="text" inputmode="numeric" placeholder="0" class="num-input" onchange="updateReliefTotals()">
+          </div>
+          <p class="hint">仅当 CPF 缴纳额 < $5,000 时可申请 · 减免额 = min(保费, $5,000 − CPF)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Course Fees Relief -->
+    <div class="relief-section" data-section="course">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">课程费用减免 Course Fees Relief</span>
+        <span class="sec-amount" id="sec_course_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="field">
+          <label>课程费用 (上限 $5,500)</label>
+          <div class="input-wrapper">
+            <span class="prefix">SGD</span>
+            <input id="courseFees" type="text" inputmode="numeric" placeholder="0" class="num-input" onchange="updateReliefTotals()">
+          </div>
+          <p class="hint">适用于批准的学术/职业课程 · 从 YA 2026 起将取消</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Spouse Relief -->
+    <div class="relief-section" data-section="spouse">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">配偶减免 Spouse Relief</span>
+        <span class="sec-amount" id="sec_spouse_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="field">
+          <label>配偶状态 (配偶年收入需 ≤ $8,000)</label>
+          <div class="input-wrapper">
+            <select id="spouseRelief" onchange="updateReliefTotals()">
+              <option value="none">不适用</option>
+              <option value="normal">配偶减免 Spouse ($2,000)</option>
+              <option value="disabled">残障配偶减免 Disabled Spouse ($5,500)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Child Relief -->
+    <div class="relief-section" data-section="child">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">子女减免 Child Relief (QCR / HCR)</span>
+        <span class="sec-amount" id="sec_child_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="input-grid">
+          <div class="field">
+            <label>合格子女人数 QCR (每人 $4,000)</label>
+            <div class="input-wrapper">
+              <select id="qcrCount" onchange="updateReliefTotals()">
+                <option value="0">0</option><option value="1">1</option>
+                <option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5">5</option>
+              </select>
+            </div>
+            <p class="hint">16 岁以下或全日制学生 · 年收入 ≤ $8,000</p>
+          </div>
+          <div class="field">
+            <label>残障子女人数 HCR (每人 $7,500)</label>
+            <div class="input-wrapper">
+              <select id="hcrCount" onchange="updateReliefTotals()">
+                <option value="0">0</option><option value="1">1</option>
+                <option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5">5</option>
+              </select>
+            </div>
+            <p class="hint">无收入限制</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. Working Mother's Child Relief -->
+    <div class="relief-section" data-section="wmcr">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">职业母亲子女减免 WMCR</span>
+        <span class="sec-amount" id="sec_wmcr_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="input-grid col3">
+          <div class="field">
+            <label>第 1 个子女 ($8,000)</label>
+            <div class="input-wrapper">
+              <select id="wmcr1" onchange="updateReliefTotals()">
+                <option value="0">不适用</option><option value="1">适用</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>第 2 个子女 ($10,000)</label>
+            <div class="input-wrapper">
+              <select id="wmcr2" onchange="updateReliefTotals()">
+                <option value="0">不适用</option><option value="1">适用</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>第 3+ 个子女 ($12,000 each)</label>
+            <div class="input-wrapper">
+              <select id="wmcr3plus" onchange="updateReliefTotals()">
+                <option value="0">0</option><option value="1">1</option>
+                <option value="2">2</option><option value="3">3</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:8px;">适用于已婚/离婚/丧偶的职业母亲 · QCR+WMCR 每子女上限 $50,000</p>
+      </div>
+    </div>
+
+    <!-- 10. Parent Relief -->
+    <div class="relief-section" data-section="parent">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">父母减免 Parent Relief</span>
+        <span class="sec-amount" id="sec_parent_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="input-grid">
+          <div class="field">
+            <label>同住父母 Living Together ($9,000/人)</label>
+            <div class="input-wrapper">
+              <select id="parentLive" onchange="updateReliefTotals()">
+                <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>非同住父母 Not Living ($5,500/人)</label>
+            <div class="input-wrapper">
+              <select id="parentNotLive" onchange="updateReliefTotals()">
+                <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="input-grid" style="margin-top:12px;">
+          <div class="field">
+            <label>同住残障父母 Disabled Living ($14,000/人)</label>
+            <div class="input-wrapper">
+              <select id="parentDisLive" onchange="updateReliefTotals()">
+                <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>非同住残障父母 Disabled Not Living ($10,000/人)</label>
+            <div class="input-wrapper">
+              <select id="parentDisNotLive" onchange="updateReliefTotals()">
+                <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:8px;">被赡养人年收入 ≤ $8,000 · 55 岁及以上或残障</p>
+      </div>
+    </div>
+
+    <!-- 11. Grandparent Caregiver Relief -->
+    <div class="relief-section" data-section="gcr">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">祖父母照顾者减免 GCR</span>
+        <span class="sec-amount" id="sec_gcr_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="field">
+          <label>是否申请 ($3,000)</label>
+          <div class="input-wrapper">
+            <select id="gcrRelief" onchange="updateReliefTotals()">
+              <option value="0">不适用</option>
+              <option value="1">适用 ($3,000)</option>
+            </select>
+          </div>
+          <p class="hint">适用于已婚/离婚/丧偶的职业母亲，祖父母照顾 12 岁以下子女</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. Handicapped Brother/Sister Relief -->
+    <div class="relief-section" data-section="sibling">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">残障兄弟姐妹减免 Handicapped Sibling</span>
+        <span class="sec-amount" id="sec_sibling_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="field">
+          <label>残障兄弟姐妹人数 (每人 $5,500)</label>
+          <div class="input-wrapper">
+            <select id="siblingCount" onchange="updateReliefTotals()">
+              <option value="0">0</option><option value="1">1</option>
+              <option value="2">2</option><option value="3">3</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 13. NSman Relief -->
+    <div class="relief-section" data-section="nsman">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">国民服役减免 NSman Relief</span>
+        <span class="sec-amount" id="sec_nsman_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="input-grid col3">
+          <div class="field">
+            <label>本人 Self</label>
+            <div class="input-wrapper">
+              <select id="nsmanSelf" onchange="updateReliefTotals()">
+                <option value="0">不适用</option>
+                <option value="1500">非关键任命 ($1,500)</option>
+                <option value="3000">关键任命 Key ($3,000)</option>
+                <option value="5000">已履行活动 ($5,000)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>妻子 Wife ($750)</label>
+            <div class="input-wrapper">
+              <select id="nsmanWife" onchange="updateReliefTotals()">
+                <option value="0">不适用</option>
+                <option value="750">适用 ($750)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>父母 Parent ($750/人)</label>
+            <div class="input-wrapper">
+              <select id="nsmanParent" onchange="updateReliefTotals()">
+                <option value="0">0</option>
+                <option value="1">1 人 ($750)</option>
+                <option value="2">2 人 ($1,500)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 14. Donations -->
+    <div class="relief-section" data-section="donation">
+      <div class="relief-header" onclick="toggleSection(this)">
+        <span class="arrow">▶</span>
+        <span class="sec-title">慈善捐赠扣除 Donations (2.5x)</span>
+        <span class="sec-amount" id="sec_donation_amt">$0</span>
+      </div>
+      <div class="relief-body">
+        <div class="field">
+          <label>捐赠金额 (扣除额 = 2.5 × 捐赠额)</label>
+          <div class="input-wrapper">
+            <span class="prefix">SGD</span>
+            <input id="donationAmt" type="text" inputmode="numeric" placeholder="0" class="num-input" onchange="updateReliefTotals()">
+          </div>
+          <p class="hint">向合格慈善机构捐赠可获 250% 税前扣除 · 不受 $80,000 上限约束</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relief Total -->
+    <div class="relief-total-bar">
+      <span class="total-label">减免总额 Total Reliefs</span>
+      <span class="total-val" id="reliefTotalDisplay">$0</span>
+    </div>
+    <div class="relief-cap-warn" id="reliefCapWarn">⚠️ 减免总额已超出 $80,000 年度上限（捐赠扣除除外），超出部分不可使用</div>
+
+    <button class="btn btn-primary" onclick="calculate()">计算税额 Calculate Tax</button>
+  </div>
+
+  <!-- ===== 结果 ===== -->
+  <div class="results" id="results">
+
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="icon" style="background:#fef3c7;color:#d97706">📊</span>
+        收入分配 Income Breakdown
+      </div>
+      <div class="donut-section">
+        <div class="donut-container">
+          <svg viewBox="0 0 170 170" width="170" height="170" id="donutSvg"></svg>
+          <div class="donut-center">
+            <span class="pct" id="effRate">0%</span>
+            <span class="pct-label">有效税率</span>
+          </div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+
+    <!-- Relief result breakdown -->
+    <div class="card">
+      <div class="card-title">
+        <span class="icon" style="background:#fce7f3;color:#db2777">🛡️</span>
+        减免明细 Relief Breakdown
+      </div>
+      <table class="relief-result-table" id="reliefResultTable"></table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="icon" style="background:#ecfdf5;color:#059669">📋</span>
+        税率档位明细 Tax Bracket Breakdown
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="bracket-table" id="bracketTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    基于 IRAS 公布的 YA 2024 起累进税率及减免规则 · 本计算仅供参考，不构成税务建议<br>
+    请以 IRAS 官方评估为准 ·
+    <a href="https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-reliefs-rebates-and-deductions/tax-reliefs" target="_blank" style="color:var(--primary)">查看 IRAS 官方减免列表</a>
+    <br>SmartTools &mdash; <a href="../index.html" style="color:var(--primary)">Home</a>
   </footer>
+</div>
 
-  <script>
-    /*
-     * Singapore YA 2025 resident tax brackets.
-     * Each entry: [upper limit of band, marginal rate, cumulative tax at end of previous band]
-     * Source: https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates
-     */
-    const RESIDENT_BRACKETS = [
-      { from: 0,       to: 20000,    rate: 0    },
-      { from: 20000,   to: 30000,    rate: 0.02 },
-      { from: 30000,   to: 40000,    rate: 0.035 },
-      { from: 40000,   to: 80000,    rate: 0.07 },
-      { from: 80000,   to: 120000,   rate: 0.115 },
-      { from: 120000,  to: 160000,   rate: 0.15 },
-      { from: 160000,  to: 200000,   rate: 0.18 },
-      { from: 200000,  to: 240000,   rate: 0.19 },
-      { from: 240000,  to: 280000,   rate: 0.195 },
-      { from: 280000,  to: 320000,   rate: 0.20 },
-      { from: 320000,  to: 500000,   rate: 0.22 },
-      { from: 500000,  to: 1000000,  rate: 0.23 },
-      { from: 1000000, to: Infinity, rate: 0.24 },
-    ];
+<script>
+const BRACKETS = [
+  { lower: 0,       upper: 20000,    rate: 0 },
+  { lower: 20000,   upper: 30000,    rate: 0.02 },
+  { lower: 30000,   upper: 40000,    rate: 0.035 },
+  { lower: 40000,   upper: 80000,    rate: 0.07 },
+  { lower: 80000,   upper: 120000,   rate: 0.115 },
+  { lower: 120000,  upper: 160000,   rate: 0.15 },
+  { lower: 160000,  upper: 200000,   rate: 0.18 },
+  { lower: 200000,  upper: 240000,   rate: 0.19 },
+  { lower: 240000,  upper: 280000,   rate: 0.195 },
+  { lower: 280000,  upper: 320000,   rate: 0.20 },
+  { lower: 320000,  upper: 500000,   rate: 0.22 },
+  { lower: 500000,  upper: 1000000,  rate: 0.23 },
+  { lower: 1000000, upper: Infinity, rate: 0.24 },
+];
 
-    const NON_RESIDENT_RATE = 0.24;
+const NON_RESIDENT_RATE = 0.22;
+const CPF_EMPLOYEE_RATE = 0.20;
+const OW_CEILING_MONTHLY = 6800;
+const RELIEF_CAP = 80000;
 
-    let residentType = 'resident';
+/* ─── helpers ─── */
 
-    function setResidentType(type) {
-      residentType = type;
-      document.getElementById('btnResident').classList.toggle('active', type === 'resident');
-      document.getElementById('btnNonResident').classList.toggle('active', type === 'non-resident');
-      document.getElementById('nonResidentNote').classList.toggle('hidden', type === 'resident');
-      calculate();
+function parseNum(id) {
+  return parseFloat(document.getElementById(id).value.replace(/[^0-9.]/g, '')) || 0;
+}
+
+function selVal(id) {
+  return document.getElementById(id).value;
+}
+
+function selNum(id) {
+  return parseFloat(selVal(id)) || 0;
+}
+
+function fmt(n) { return n.toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+function fmtDec(n) { return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+/* ─── section toggle ─── */
+
+function toggleSection(header) {
+  const isOpen = header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open', isOpen);
+}
+
+/* ─── CPF auto toggle ─── */
+
+function toggleCpfAuto() {
+  const auto = document.getElementById('autoCalcCpf').checked;
+  document.getElementById('cpfEmployee').disabled = auto;
+  if (auto) document.getElementById('cpfEmployee').value = '';
+  updateReliefTotals();
+}
+
+/* ─── compute all reliefs ─── */
+
+function computeReliefs() {
+  const salary = parseNum('salary');
+  const reliefs = {};
+
+  // 1. Earned Income
+  const ageMap = {
+    below55: { normal: 1000, disabled: 4000 },
+    '55to59': { normal: 6000, disabled: 10000 },
+    '60above': { normal: 8000, disabled: 12000 },
+  };
+  const ageGroup = selVal('ageGroup');
+  const eiDis = selVal('eiDisability') === 'yes';
+  reliefs.earned = ageMap[ageGroup][eiDis ? 'disabled' : 'normal'];
+
+  // 2. CPF Employee
+  let cpf;
+  if (document.getElementById('autoCalcCpf').checked) {
+    const monthlyOW = Math.min(salary / 12, OW_CEILING_MONTHLY);
+    cpf = Math.round(monthlyOW * CPF_EMPLOYEE_RATE * 12);
+    document.getElementById('cpfEmployee').value = cpf > 0 ? fmt(cpf) : '';
+  } else {
+    cpf = parseNum('cpfEmployee');
+  }
+  reliefs.cpf = cpf;
+
+  // 3. CPF Cash Top-up
+  const topSelf = Math.min(parseNum('cpfTopupSelf'), 8000);
+  const topFam = Math.min(parseNum('cpfTopupFamily'), 8000);
+  reliefs.cpfTopup = topSelf + topFam;
+
+  // 4. SRS
+  const srsCap = selVal('srsType') === 'local' ? 15300 : 35700;
+  reliefs.srs = Math.min(parseNum('srsContrib'), srsCap);
+
+  // 5. Life Insurance
+  const premium = parseNum('lifeInsPremium');
+  if (cpf < 5000) {
+    reliefs.lifeIns = Math.min(premium, 5000 - cpf);
+  } else {
+    reliefs.lifeIns = 0;
+  }
+
+  // 6. Course Fees
+  reliefs.course = Math.min(parseNum('courseFees'), 5500);
+
+  // 7. Spouse
+  const spMap = { none: 0, normal: 2000, disabled: 5500 };
+  reliefs.spouse = spMap[selVal('spouseRelief')];
+
+  // 8. Child (QCR + HCR)
+  reliefs.child = selNum('qcrCount') * 4000 + selNum('hcrCount') * 7500;
+
+  // 9. WMCR
+  const w1 = selNum('wmcr1') * 8000;
+  const w2 = selNum('wmcr2') * 10000;
+  const w3 = selNum('wmcr3plus') * 12000;
+  reliefs.wmcr = w1 + w2 + w3;
+
+  // 10. Parent
+  reliefs.parent =
+    selNum('parentLive') * 9000 +
+    selNum('parentNotLive') * 5500 +
+    selNum('parentDisLive') * 14000 +
+    selNum('parentDisNotLive') * 10000;
+
+  // 11. GCR
+  reliefs.gcr = selNum('gcrRelief') * 3000;
+
+  // 12. Sibling
+  reliefs.sibling = selNum('siblingCount') * 5500;
+
+  // 13. NSman
+  reliefs.nsman = selNum('nsmanSelf') + selNum('nsmanWife') + selNum('nsmanParent') * 750;
+
+  // 14. Donations (not subject to $80k cap)
+  reliefs.donation = parseNum('donationAmt') * 2.5;
+
+  // Sum (excl. donations for cap check)
+  const sumExDonation = reliefs.earned + reliefs.cpf + reliefs.cpfTopup + reliefs.srs +
+    reliefs.lifeIns + reliefs.course + reliefs.spouse + reliefs.child + reliefs.wmcr +
+    reliefs.parent + reliefs.gcr + reliefs.sibling + reliefs.nsman;
+
+  const cappedExDonation = Math.min(sumExDonation, RELIEF_CAP);
+  reliefs._sumExDonation = sumExDonation;
+  reliefs._capped = cappedExDonation;
+  reliefs._total = cappedExDonation + reliefs.donation;
+  reliefs._cpfRaw = cpf;
+
+  return reliefs;
+}
+
+function updateReliefTotals() {
+  const r = computeReliefs();
+
+  document.getElementById('sec_earned_amt').textContent = '$' + fmt(r.earned);
+  document.getElementById('sec_cpf_amt').textContent = '$' + fmt(r.cpf);
+  document.getElementById('sec_cpfTopup_amt').textContent = '$' + fmt(r.cpfTopup);
+  document.getElementById('sec_srs_amt').textContent = '$' + fmt(r.srs);
+  document.getElementById('sec_lifeIns_amt').textContent = '$' + fmt(r.lifeIns);
+  document.getElementById('sec_course_amt').textContent = '$' + fmt(r.course);
+  document.getElementById('sec_spouse_amt').textContent = '$' + fmt(r.spouse);
+  document.getElementById('sec_child_amt').textContent = '$' + fmt(r.child);
+  document.getElementById('sec_wmcr_amt').textContent = '$' + fmt(r.wmcr);
+  document.getElementById('sec_parent_amt').textContent = '$' + fmt(r.parent);
+  document.getElementById('sec_gcr_amt').textContent = '$' + fmt(r.gcr);
+  document.getElementById('sec_sibling_amt').textContent = '$' + fmt(r.sibling);
+  document.getElementById('sec_nsman_amt').textContent = '$' + fmt(r.nsman);
+  document.getElementById('sec_donation_amt').textContent = '$' + fmt(r.donation);
+
+  document.getElementById('reliefTotalDisplay').textContent = '$' + fmt(r._total);
+
+  const warn = document.getElementById('reliefCapWarn');
+  warn.classList.toggle('show', r._sumExDonation > RELIEF_CAP);
+}
+
+/* ─── main calculate ─── */
+
+function calculate() {
+  const salary = parseNum('salary');
+  const bonus = parseNum('bonus');
+  const isResident = document.getElementById('isResident').checked;
+
+  const r = computeReliefs();
+  const grossIncome = salary + bonus;
+  const chargeableIncome = Math.max(0, grossIncome - r._total);
+
+  let totalTax = 0;
+  const breakdown = [];
+
+  if (isResident) {
+    for (const b of BRACKETS) {
+      if (chargeableIncome <= b.lower) { breakdown.push({ ...b, taxable: 0, tax: 0 }); continue; }
+      const taxable = Math.min(chargeableIncome, b.upper) - b.lower;
+      const tax = taxable * b.rate;
+      totalTax += tax;
+      breakdown.push({ ...b, taxable, tax });
     }
+  } else {
+    totalTax = chargeableIncome * NON_RESIDENT_RATE;
+    breakdown.push({ lower: 0, upper: Infinity, rate: NON_RESIDENT_RATE, taxable: chargeableIncome, tax: totalTax });
+  }
 
-    function fmt(n) {
-      return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  totalTax = Math.round(totalTax * 100) / 100;
+  const effectiveRate = chargeableIncome > 0 ? (totalTax / chargeableIncome * 100) : 0;
+  const effectiveRateGross = grossIncome > 0 ? (totalTax / grossIncome * 100) : 0;
+  const cpf = r._cpfRaw;
+  const netIncome = grossIncome - totalTax - cpf;
+
+  renderSummary(grossIncome, chargeableIncome, totalTax, effectiveRate, effectiveRateGross, netIncome, cpf, r._total);
+  renderDonut(totalTax, cpf, netIncome, effectiveRateGross);
+  renderReliefResult(r);
+  renderBracketTable(breakdown, chargeableIncome, totalTax, isResident);
+
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ─── renderers ─── */
+
+function renderSummary(gross, chargeable, tax, rate, rateGross, net, cpf, reliefTotal) {
+  const grid = document.getElementById('summaryGrid');
+  const items = [
+    { label: '总收入', value: `$${fmt(gross)}`, sub: `减免 $${fmt(reliefTotal)}` },
+    { label: '应税收入', value: `$${fmt(chargeable)}`, sub: `总收入 − 减免` },
+    { label: '应缴税额', value: `$${fmt(tax)}`, sub: `有效税率 ${fmtDec(rateGross)}%`, hl: true },
+    { label: '月净收入', value: `$${fmt(Math.round((net) / 12))}`, sub: `年 $${fmt(Math.round(net))}` },
+  ];
+  grid.innerHTML = items.map(i => `
+    <div class="stat-card ${i.hl ? 'highlight' : ''}">
+      <div class="label">${i.label}</div>
+      <div class="value">${i.value}</div>
+      <div class="sub">${i.sub}</div>
+    </div>`).join('');
+}
+
+function renderDonut(tax, cpf, net, rate) {
+  const total = tax + cpf + net;
+  if (total <= 0) return;
+  const segments = [
+    { label: '净收入 Take-home', pct: net / total, color: '#10b981' },
+    { label: 'CPF 公积金', pct: cpf / total, color: '#6366f1' },
+    { label: '所得税', pct: tax / total, color: '#f59e0b' },
+  ];
+  const svg = document.getElementById('donutSvg');
+  const r = 66, cx = 85, cy = 85, stroke = 22;
+  const C = 2 * Math.PI * r;
+  let off = 0;
+  svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#f1f5f9" stroke-width="${stroke}"/>`;
+  for (const s of segments) {
+    const d = s.pct * C;
+    svg.innerHTML += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${stroke}" stroke-dasharray="${d} ${C - d}" stroke-dashoffset="${-off}" stroke-linecap="round"/>`;
+    off += d;
+  }
+  document.getElementById('effRate').textContent = fmtDec(rate) + '%';
+  document.getElementById('legend').innerHTML = segments.map(s => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${s.color}"></span>
+      <span>${s.label}</span>
+      <span class="leg-val">${(s.pct * 100).toFixed(1)}%</span>
+    </div>`).join('');
+}
+
+function renderReliefResult(r) {
+  const rows = [
+    ['获得收入减免 Earned Income', r.earned],
+    ['公积金减免 CPF Employee', r.cpf],
+    ['CPF 现金填补 Cash Top-up', r.cpfTopup],
+    ['补充退休计划 SRS', r.srs],
+    ['人寿保险 Life Insurance', r.lifeIns],
+    ['课程费用 Course Fees', r.course],
+    ['配偶减免 Spouse', r.spouse],
+    ['子女减免 Child (QCR+HCR)', r.child],
+    ['职业母亲子女减免 WMCR', r.wmcr],
+    ['父母减免 Parent', r.parent],
+    ['祖父母照顾者 GCR', r.gcr],
+    ['残障兄弟姐妹 Sibling', r.sibling],
+    ['国民服役 NSman', r.nsman],
+  ];
+
+  let html = rows
+    .filter(([, v]) => v > 0)
+    .map(([label, v]) => `<tr><td>${label}</td><td>$${fmt(v)}</td></tr>`)
+    .join('');
+
+  if (r._sumExDonation > RELIEF_CAP) {
+    html += `<tr><td style="color:var(--danger)">年度上限调整 (Cap $80,000)</td><td style="color:var(--danger)">−$${fmt(r._sumExDonation - RELIEF_CAP)}</td></tr>`;
+  }
+
+  if (r.donation > 0) {
+    html += `<tr><td>慈善捐赠扣除 Donations (2.5×)</td><td>$${fmt(r.donation)}</td></tr>`;
+  }
+
+  html += `<tr class="rr-total"><td>减免合计 Total</td><td>$${fmt(r._total)}</td></tr>`;
+
+  document.getElementById('reliefResultTable').innerHTML = html;
+}
+
+function renderBracketTable(breakdown, chargeable, totalTax, isResident) {
+  const table = document.getElementById('bracketTable');
+  const maxTax = Math.max(...breakdown.map(b => b.tax));
+
+  let html = `<thead><tr><th>收入区间</th><th>税率</th><th>应税金额</th><th class="bar-cell">比例</th><th>税额</th></tr></thead><tbody>`;
+
+  if (isResident) {
+    for (const b of breakdown) {
+      const lbl = b.upper === Infinity ? `> $${fmt(b.lower)}` : `$${fmt(b.lower)} – $${fmt(b.upper)}`;
+      const active = b.taxable > 0 && b.tax > 0;
+      const bw = maxTax > 0 ? (b.tax / maxTax * 100) : 0;
+      html += `<tr class="${active ? 'active-bracket' : ''}" style="${!active ? 'opacity:.4' : ''}">
+        <td>${lbl}</td><td>${(b.rate * 100).toFixed(1)}%</td><td>$${fmt(b.taxable)}</td>
+        <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${bw}%"></div></div></td>
+        <td>$${fmtDec(b.tax)}</td></tr>`;
     }
+  } else {
+    html += `<tr class="active-bracket"><td>全部收入</td><td>${NON_RESIDENT_RATE * 100}%</td>
+      <td>$${fmt(chargeable)}</td><td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:100%"></div></div></td>
+      <td>$${fmtDec(totalTax)}</td></tr>`;
+  }
 
-    function calculate() {
-      const income = parseFloat(document.getElementById('income').value) || 0;
-      const resultsEl = document.getElementById('results');
+  html += `<tr class="total-row"><td colspan="2">合计 Total</td><td>$${fmt(chargeable)}</td><td></td><td>$${fmtDec(totalTax)}</td></tr></tbody>`;
+  table.innerHTML = html;
+}
 
-      if (income <= 0) {
-        resultsEl.classList.add('hidden');
-        return;
-      }
+/* ─── auto-format number inputs ─── */
 
-      resultsEl.classList.remove('hidden');
+document.querySelectorAll('.num-input').forEach(input => {
+  input.addEventListener('input', function () {
+    const pos = this.selectionStart;
+    const raw = this.value.replace(/[^0-9]/g, '');
+    const before = this.value.length;
+    this.value = raw ? parseInt(raw, 10).toLocaleString('en-US') : '';
+    const diff = this.value.length - before;
+    this.setSelectionRange(pos + diff, pos + diff);
+    updateReliefTotals();
+  });
+});
 
-      if (residentType === 'non-resident') {
-        calculateNonResident(income);
-      } else {
-        calculateResident(income);
-      }
-    }
+document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
 
-    function calculateResident(income) {
-      let totalTax = 0;
-      let rows = '';
-
-      RESIDENT_BRACKETS.forEach(bracket => {
-        if (income <= bracket.from) return;
-
-        const taxable = Math.min(income, bracket.to) - bracket.from;
-        const tax = taxable * bracket.rate;
-        totalTax += tax;
-
-        const bandLabel = bracket.to === Infinity
-          ? `Above $${fmt(bracket.from)}`
-          : `$${fmt(bracket.from)} – $${fmt(bracket.to)}`;
-
-        const isActive = income > bracket.from;
-        rows += `<tr class="${isActive && tax > 0 ? 'highlight-row' : ''}">
-          <td>${bandLabel}</td>
-          <td class="number">${(bracket.rate * 100).toFixed(1)}%</td>
-          <td class="number">$${fmt(taxable)}</td>
-          <td class="number">$${fmt(tax)}</td>
-        </tr>`;
-      });
-
-      rows += `<tr style="font-weight:700; border-top:2px solid var(--color-border);">
-        <td>Total</td>
-        <td></td>
-        <td class="number">$${fmt(income)}</td>
-        <td class="number">$${fmt(totalTax)}</td>
-      </tr>`;
-
-      updateUI(income, totalTax, rows);
-    }
-
-    function calculateNonResident(income) {
-      const residentTax = calculateResidentTaxOnly(income);
-      const flatTax = income * NON_RESIDENT_RATE;
-      const totalTax = Math.max(residentTax, flatTax);
-
-      let rows = `<tr>
-        <td>Flat rate (24%)</td>
-        <td class="number">24.0%</td>
-        <td class="number">$${fmt(income)}</td>
-        <td class="number">$${fmt(flatTax)}</td>
-      </tr>
-      <tr>
-        <td>Resident rates (for comparison)</td>
-        <td class="number">—</td>
-        <td class="number">$${fmt(income)}</td>
-        <td class="number">$${fmt(residentTax)}</td>
-      </tr>
-      <tr style="font-weight:700; border-top:2px solid var(--color-border);">
-        <td>Tax Payable (higher of the two)</td>
-        <td></td>
-        <td class="number">$${fmt(income)}</td>
-        <td class="number">$${fmt(totalTax)}</td>
-      </tr>`;
-
-      updateUI(income, totalTax, rows);
-    }
-
-    function calculateResidentTaxOnly(income) {
-      let tax = 0;
-      RESIDENT_BRACKETS.forEach(bracket => {
-        if (income <= bracket.from) return;
-        const taxable = Math.min(income, bracket.to) - bracket.from;
-        tax += taxable * bracket.rate;
-      });
-      return tax;
-    }
-
-    function updateUI(income, totalTax, rows) {
-      document.getElementById('totalTax').textContent = '$' + fmt(totalTax);
-      document.getElementById('effectiveRate').textContent =
-        income > 0 ? (totalTax / income * 100).toFixed(2) + '%' : '0%';
-      document.getElementById('afterTax').textContent = '$' + fmt(income - totalTax);
-      document.getElementById('monthlyAfterTax').textContent = '$' + fmt((income - totalTax) / 12);
-      document.getElementById('bracketTable').innerHTML = rows;
-    }
-  </script>
+updateReliefTotals();
+</script>
 </body>
 </html>
