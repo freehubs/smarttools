@@ -127,19 +127,26 @@
   .tag-sap { background: #fef3c7; color: #92400e; }
   .tag-gep { background: #dbeafe; color: #1e40af; }
   .tag-girls { background: #fce7f3; color: #9d174d; }
-  .tag-boys { background: #dbeafe; color: #1e40af; }
+  .tag-boys { background: #e0e7ff; color: #3730a3; }
   .tag-aided { background: #ecfdf5; color: #065f46; }
+  .tag-hot { background: #fff7ed; color: #c2410c; }
 
-  .school-card .s-stats {
-    display: flex; gap: 16px; margin-top: 10px; font-size: 12px;
+  .school-card .s-note {
+    font-size: 12px; color: var(--text-secondary); margin-top: 8px;
+    line-height: 1.5;
   }
-  .school-card .s-stat { display: flex; flex-direction: column; }
-  .school-card .s-stat .s-val { font-weight: 700; font-size: 16px; color: var(--accent); }
-  .school-card .s-stat .s-label { color: var(--text-tertiary); font-size: 10px; }
 
+  .school-card .s-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);
+  }
   .school-card .s-addr {
-    font-size: 11px; color: var(--text-tertiary); margin-top: 8px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 11px; color: var(--text-tertiary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
+  }
+  .school-card .s-props {
+    font-size: 12px; font-weight: 600; color: var(--primary);
+    white-space: nowrap; margin-left: 8px;
   }
 
   /* Property Panel */
@@ -236,7 +243,7 @@
 <div class="container">
   <header>
     <h1>🇸🇬 新加坡名校学区房</h1>
-    <p>SG Top 20 Primary Schools & Nearby Properties — 基于 2024 P1 Phase 2C 报名数据排名 · 展示 1 公里内热门楼盘</p>
+    <p>SG Top 20 Primary Schools & Nearby Properties — 基于学术声誉、GEP/SAP 认证及综合表现排名 · 展示 1 公里内热门楼盘</p>
   </header>
 
   <div class="card">
@@ -252,10 +259,10 @@
     <span class="filter-label">筛选 Filter:</span>
     <select id="filterRegion" onchange="renderSchools()">
       <option value="all">所有区域 All Regions</option>
-      <option value="west">西部 West</option>
-      <option value="north">北部/东北 North/NE</option>
-      <option value="east">东部 East</option>
       <option value="central">中部 Central</option>
+      <option value="east">东部 East</option>
+      <option value="north">北部 North</option>
+      <option value="west">西部 West</option>
     </select>
     <select id="filterPropType" onchange="renderProperties()">
       <option value="all">所有房产 All Types</option>
@@ -277,318 +284,308 @@
 </div>
 
 <footer>
-  数据来源：MOE P1 Registration 2024 Phase 2C · launches.sg · SRX · PropertyGuru · home123.sg · 房产数据为参考值，请以实际交易为准<br>
+  数据来源：MOE SchoolFinder · KiasuParents · launches.sg · SRX · PropertyGuru · 房产数据为参考值，请以实际交易为准<br>
   SmartTools — <a href="../index.html" style="color:var(--accent)">Home</a>
 </footer>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════
-   DATA: 20 Schools + Properties
+   DATA: Top 20 Primary Schools + Nearby Properties
+   Ranking: Academic reputation, GEP/SAP certification, overall prestige
    ═══════════════════════════════════════════════════════════════ */
 
 const SCHOOLS = [
   {
-    rank:1, name:"Princess Elizabeth Primary", nameZh:"伊丽莎白公主小学",
-    addr:"30 Bukit Batok West Ave 3, S659163", town:"Bukit Batok", region:"west",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:6.59, applicants:270, vacancies:41,
-    lat:1.3489, lng:103.7498,
-    note:"连续 3 年最热门 · 周边大量 BTO 新项目",
+    rank:1, name:"Nanyang Primary School", nameZh:"南洋小学",
+    addr:"52 King's Road, S268098", town:"武吉知马 Bukit Timah", region:"central",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:true,
+    lat:1.3393, lng:103.7818,
+    note:"GEP + SAP 双认证 · 百年华校 · 新加坡最顶级小学之一",
     properties:[
-      {name:"Le Quest",type:"Condo",tenure:"99-yr",top:2021,avgPsf:1350,price:"$850K–1.6M",units:516,txns:42,dist:"0.6km",lat:1.3465,lng:103.7462},
-      {name:"Midview City",type:"Condo",tenure:"60-yr",top:2014,avgPsf:980,price:"$680K–1.2M",units:451,txns:18,dist:"0.8km",lat:1.3508,lng:103.7465},
-      {name:"Hillview Regency",type:"Condo",tenure:"99-yr",top:2001,avgPsf:1050,price:"$850K–1.4M",units:572,txns:22,dist:"0.9km",lat:1.3530,lng:103.7520},
-      {name:"Blk 148 Bt Batok West Ave 6",type:"HDB",tenure:"99-yr",top:1986,avgPsf:520,price:"$380K–480K",units:0,txns:8,dist:"0.3km",lat:1.3478,lng:103.7488},
-      {name:"Blk 202 Bt Batok St 21",type:"HDB",tenure:"99-yr",top:1988,avgPsf:540,price:"$400K–520K",units:0,txns:12,dist:"0.4km",lat:1.3501,lng:103.7510},
-      {name:"Blk 298 Bt Batok St 22",type:"HDB",tenure:"99-yr",top:1990,avgPsf:530,price:"$390K–500K",units:0,txns:10,dist:"0.5km",lat:1.3475,lng:103.7525},
-      {name:"Guilin View",type:"Condo",tenure:"99-yr",top:2003,avgPsf:920,price:"$650K–980K",units:360,txns:8,dist:"0.7km",lat:1.3460,lng:103.7520},
-      {name:"Otto Place EC",type:"EC",tenure:"99-yr",top:2028,avgPsf:1450,price:"$1.1M–1.7M",units:530,txns:0,dist:"0.9km",lat:1.3445,lng:103.7470}
+      {name:"Forett at Bukit Timah",type:"Condo",tenure:"FH",top:2024,avgPsf:2150,price:"$1.5M–3.2M",units:633,txns:48,dist:"0.5km",lat:1.3420,lng:103.7800},
+      {name:"Fourth Avenue Residences",type:"Condo",tenure:"99-yr",top:2023,avgPsf:2100,price:"$1.4M–3.0M",units:476,txns:42,dist:"0.6km",lat:1.3370,lng:103.7850},
+      {name:"Mayfair Modern",type:"Condo",tenure:"99-yr",top:2023,avgPsf:2050,price:"$1.2M–2.5M",units:171,txns:25,dist:"0.7km",lat:1.3360,lng:103.7790},
+      {name:"Juniper Hill",type:"Condo",tenure:"FH",top:2023,avgPsf:2650,price:"$2.5M–5.0M",units:115,txns:18,dist:"0.8km",lat:1.3415,lng:103.7860},
+      {name:"Daintree Residence",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1850,price:"$1.0M–1.8M",units:327,txns:32,dist:"0.9km",lat:1.3425,lng:103.7780},
+      {name:"The Linq @ Beauty World",type:"Condo",tenure:"99-yr",top:2024,avgPsf:1950,price:"$1.0M–2.0M",units:120,txns:15,dist:"0.4km",lat:1.3380,lng:103.7835}
     ]
   },
   {
-    rank:2, name:"Nan Hua Primary", nameZh:"南华小学",
-    addr:"30 Jalan Lempeng, S128806", town:"Clementi", region:"west",
+    rank:2, name:"Tao Nan School", nameZh:"道南学校",
+    addr:"49 Marine Crescent, S449761", town:"马林百列 Marine Parade", region:"east",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:true,
+    lat:1.3057, lng:103.9129,
+    note:"GEP + SAP 双认证 · 福建会馆属校 · 东部顶级名校",
+    properties:[
+      {name:"Meyer Mansion",type:"Condo",tenure:"FH",top:2024,avgPsf:2550,price:"$2.0M–5.0M",units:200,txns:22,dist:"0.6km",lat:1.3030,lng:103.9170},
+      {name:"Amber Park",type:"Condo",tenure:"FH",top:2023,avgPsf:2400,price:"$1.8M–4.5M",units:592,txns:40,dist:"0.7km",lat:1.3040,lng:103.9185},
+      {name:"Coastline Residences",type:"Condo",tenure:"FH",top:2023,avgPsf:2350,price:"$1.5M–3.5M",units:144,txns:18,dist:"0.8km",lat:1.3020,lng:103.9160},
+      {name:"The Meyerise",type:"Condo",tenure:"FH",top:2014,avgPsf:1750,price:"$1.5M–3.0M",units:239,txns:15,dist:"0.5km",lat:1.3045,lng:103.9155},
+      {name:"Nyon",type:"Condo",tenure:"FH",top:2023,avgPsf:2850,price:"$2.5M–5.0M",units:92,txns:10,dist:"0.9km",lat:1.3025,lng:103.9100},
+      {name:"Blk 39 Marine Crescent",type:"HDB",tenure:"99-yr",top:1975,avgPsf:580,price:"$500K–720K",units:0,txns:8,dist:"0.2km",lat:1.3062,lng:103.9135},
+      {name:"Blk 55 Marine Terrace",type:"HDB",tenure:"99-yr",top:1977,avgPsf:560,price:"$480K–680K",units:0,txns:10,dist:"0.4km",lat:1.3050,lng:103.9115}
+    ]
+  },
+  {
+    rank:3, name:"Ai Tong School", nameZh:"爱同学校",
+    addr:"100 Bright Hill Drive, S579646", town:"碧山 Bishan", region:"central",
     type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
-    ratio:4.00, applicants:160, vacancies:40,
+    lat:1.3607, lng:103.8357,
+    note:"SAP 名校 · 碧山核心 · 福建会馆属校",
+    properties:[
+      {name:"JadeScape",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1850,price:"$1.2M–2.8M",units:1206,txns:65,dist:"0.6km",lat:1.3585,lng:103.8380},
+      {name:"Sky Vue",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1650,price:"$1.1M–2.2M",units:694,txns:30,dist:"0.7km",lat:1.3620,lng:103.8340},
+      {name:"Sky Habitat",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1700,price:"$1.2M–2.5M",units:509,txns:25,dist:"0.8km",lat:1.3590,lng:103.8370},
+      {name:"Thomson Three",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1400,price:"$900K–1.5M",units:137,txns:10,dist:"0.9km",lat:1.3635,lng:103.8380},
+      {name:"Blk 230 Bishan St 23",type:"HDB",tenure:"99-yr",top:1993,avgPsf:620,price:"$500K–660K",units:0,txns:12,dist:"0.4km",lat:1.3610,lng:103.8350},
+      {name:"Blk 283 Bishan St 22",type:"HDB",tenure:"99-yr",top:1995,avgPsf:630,price:"$510K–680K",units:0,txns:14,dist:"0.5km",lat:1.3600,lng:103.8365}
+    ]
+  },
+  {
+    rank:4, name:"Nan Hua Primary School", nameZh:"南华小学",
+    addr:"30 Jalan Lempeng, S128806", town:"金文泰 Clementi", region:"west",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:true,
     lat:1.3106, lng:103.7654,
-    note:"SAP 名校 · 西部最受欢迎 · 儒家教育传统",
+    note:"GEP + SAP 双认证 · 西部最受欢迎 · 儒家教育传统",
     properties:[
       {name:"Elta",type:"Condo",tenure:"99-yr",top:2028,avgPsf:2300,price:"$1.3M–2.5M",units:501,txns:0,dist:"0.5km",lat:1.3130,lng:103.7630},
       {name:"Parc Clematis",type:"Condo",tenure:"99-yr",top:2024,avgPsf:1650,price:"$1.0M–2.8M",units:1468,txns:85,dist:"0.7km",lat:1.3085,lng:103.7620},
       {name:"Whistler Grand",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1700,price:"$900K–2.0M",units:716,txns:48,dist:"0.8km",lat:1.3060,lng:103.7680},
       {name:"Clement Canopy",type:"Condo",tenure:"99-yr",top:2020,avgPsf:1580,price:"$1.1M–2.2M",units:505,txns:35,dist:"0.6km",lat:1.3095,lng:103.7690},
-      {name:"Blk 312 Clementi Ave 4",type:"HDB",tenure:"99-yr",top:1983,avgPsf:600,price:"$450K–580K",units:0,txns:10,dist:"0.3km",lat:1.3115,lng:103.7645},
-      {name:"Blk 352 Clementi Ave 2",type:"HDB",tenure:"99-yr",top:1985,avgPsf:620,price:"$480K–620K",units:0,txns:14,dist:"0.5km",lat:1.3090,lng:103.7670},
       {name:"Nava Grove",type:"Condo",tenure:"99-yr",top:2028,avgPsf:2100,price:"$1.3M–2.6M",units:552,txns:0,dist:"0.9km",lat:1.3140,lng:103.7700},
-      {name:"The Trilinq",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1450,price:"$980K–1.8M",units:755,txns:30,dist:"0.7km",lat:1.3075,lng:103.7605}
+      {name:"The Trilinq",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1450,price:"$980K–1.8M",units:755,txns:30,dist:"0.7km",lat:1.3075,lng:103.7605},
+      {name:"Blk 312 Clementi Ave 4",type:"HDB",tenure:"99-yr",top:1983,avgPsf:600,price:"$450K–580K",units:0,txns:10,dist:"0.3km",lat:1.3115,lng:103.7645},
+      {name:"Blk 352 Clementi Ave 2",type:"HDB",tenure:"99-yr",top:1985,avgPsf:620,price:"$480K–620K",units:0,txns:14,dist:"0.5km",lat:1.3090,lng:103.7670}
     ]
   },
   {
-    rank:3, name:"Chongfu School", nameZh:"崇福学校",
-    addr:"31 Yishun St 22, S768577", town:"Yishun", region:"north",
-    type:"Govt-aided", gender:"Mixed", sap:false, gep:false,
-    ratio:3.56, applicants:153, vacancies:43,
-    lat:1.4286, lng:103.8328,
-    note:"热度急升 · 福建会馆属校 · 北部明星学校",
+    rank:5, name:"Catholic High School (Primary)", nameZh:"公教中学（附小）",
+    addr:"9 Bishan Street 22, S579767", town:"碧山 Bishan", region:"central",
+    type:"Govt-aided", gender:"Boys", sap:true, gep:true,
+    lat:1.3534, lng:103.8490,
+    note:"GEP + SAP 双认证 · 碧山顶尖男校 · 天主教传统",
     properties:[
-      {name:"North Gaia EC",type:"EC",tenure:"99-yr",top:2025,avgPsf:1200,price:"$1.1M–2.0M",units:616,txns:616,dist:"0.4km",lat:1.4310,lng:103.8340},
-      {name:"The Criterion EC",type:"EC",tenure:"99-yr",top:2019,avgPsf:1050,price:"$950K–1.4M",units:505,txns:28,dist:"0.7km",lat:1.4260,lng:103.8360},
-      {name:"Symphony Suites",type:"Condo",tenure:"99-yr",top:2018,avgPsf:1080,price:"$780K–1.3M",units:660,txns:22,dist:"0.8km",lat:1.4250,lng:103.8310},
-      {name:"Blk 223 Yishun St 21",type:"HDB",tenure:"99-yr",top:1990,avgPsf:450,price:"$350K–430K",units:0,txns:8,dist:"0.3km",lat:1.4295,lng:103.8315},
-      {name:"Blk 334 Yishun Ring Rd",type:"HDB",tenure:"99-yr",top:1992,avgPsf:460,price:"$360K–450K",units:0,txns:12,dist:"0.5km",lat:1.4275,lng:103.8345},
-      {name:"Yishun Sapphire",type:"Condo",tenure:"99-yr",top:2008,avgPsf:850,price:"$580K–880K",units:298,txns:10,dist:"0.9km",lat:1.4305,lng:103.8295}
+      {name:"JadeScape",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1850,price:"$1.2M–2.8M",units:1206,txns:65,dist:"0.7km",lat:1.3585,lng:103.8470},
+      {name:"Sky Habitat",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1700,price:"$1.2M–2.5M",units:509,txns:25,dist:"0.5km",lat:1.3560,lng:103.8510},
+      {name:"Bishan Loft",type:"Condo",tenure:"FH",top:2004,avgPsf:1350,price:"$1.0M–1.8M",units:120,txns:8,dist:"0.6km",lat:1.3510,lng:103.8475},
+      {name:"Blk 510 Bishan St 11",type:"HDB",tenure:"99-yr",top:1992,avgPsf:600,price:"$480K–640K",units:0,txns:10,dist:"0.4km",lat:1.3540,lng:103.8480},
+      {name:"Blk 279 Bishan St 24",type:"HDB",tenure:"99-yr",top:1994,avgPsf:610,price:"$490K–650K",units:0,txns:12,dist:"0.5km",lat:1.3525,lng:103.8505}
     ]
   },
   {
-    rank:4, name:"Rosyth School", nameZh:"乐赛学校",
-    addr:"21 Serangoon North Ave 4, S555855", town:"Serangoon", region:"central",
-    type:"Govt-aided", gender:"Mixed", sap:false, gep:false,
-    ratio:3.16, applicants:139, vacancies:44,
+    rank:6, name:"Raffles Girls' Primary School", nameZh:"莱佛士女子小学",
+    addr:"21 Hillcrest Road, S288925", town:"武吉知马 Bukit Timah", region:"central",
+    type:"Government", gender:"Girls", sap:false, gep:true,
+    lat:1.3280, lng:103.8069,
+    note:"GEP 学校 · 顶级女校 · 武吉知马核心",
+    properties:[
+      {name:"Royalgreen",type:"Condo",tenure:"FH",top:2023,avgPsf:2750,price:"$2.0M–4.5M",units:285,txns:28,dist:"0.5km",lat:1.3260,lng:103.8090},
+      {name:"Maplewoods",type:"Condo",tenure:"FH",top:2002,avgPsf:1550,price:"$1.8M–3.5M",units:697,txns:22,dist:"0.4km",lat:1.3295,lng:103.8050},
+      {name:"The Atelier",type:"Condo",tenure:"FH",top:2025,avgPsf:2700,price:"$1.8M–3.5M",units:120,txns:8,dist:"0.7km",lat:1.3255,lng:103.8100},
+      {name:"Dunearn 386",type:"Condo",tenure:"FH",top:2022,avgPsf:2500,price:"$1.5M–2.8M",units:35,txns:5,dist:"0.8km",lat:1.3300,lng:103.8040},
+      {name:"D'Leedon",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1750,price:"$1.5M–3.5M",units:1715,txns:55,dist:"0.9km",lat:1.3250,lng:103.8110}
+    ]
+  },
+  {
+    rank:7, name:"Henry Park Primary School", nameZh:"恒力小学",
+    addr:"1 Holland Close, S271101", town:"荷兰路 Holland", region:"central",
+    type:"Government", gender:"Mixed", sap:false, gep:true,
+    lat:1.3109, lng:103.7920,
+    note:"GEP 学校 · 荷兰路优质学区 · 家长口碑极佳",
+    properties:[
+      {name:"One Holland Village",type:"Condo",tenure:"99-yr",top:2024,avgPsf:2350,price:"$1.2M–3.5M",units:296,txns:32,dist:"0.5km",lat:1.3090,lng:103.7940},
+      {name:"Leedon Green",type:"Condo",tenure:"FH",top:2023,avgPsf:2550,price:"$1.8M–4.5M",units:638,txns:45,dist:"0.7km",lat:1.3130,lng:103.7950},
+      {name:"Holland Residences",type:"Condo",tenure:"FH",top:2012,avgPsf:1550,price:"$1.2M–2.5M",units:82,txns:8,dist:"0.4km",lat:1.3100,lng:103.7935},
+      {name:"Pollen & Bleu",type:"Condo",tenure:"FH",top:2017,avgPsf:2150,price:"$1.5M–3.0M",units:106,txns:10,dist:"0.6km",lat:1.3120,lng:103.7905},
+      {name:"Blk 6 Holland Close",type:"HDB",tenure:"99-yr",top:1973,avgPsf:580,price:"$480K–650K",units:0,txns:6,dist:"0.3km",lat:1.3115,lng:103.7915},
+      {name:"Blk 3 Holland Close",type:"HDB",tenure:"99-yr",top:1972,avgPsf:570,price:"$460K–630K",units:0,txns:5,dist:"0.4km",lat:1.3105,lng:103.7910}
+    ]
+  },
+  {
+    rank:8, name:"Rosyth School", nameZh:"乐赛学校",
+    addr:"21 Serangoon North Ave 4, S555855", town:"实龙岗 Serangoon", region:"central",
+    type:"Govt-aided", gender:"Mixed", sap:false, gep:true,
     lat:1.3630, lng:103.8719,
-    note:"传统名校 · 东北部最受欢迎之一",
+    note:"GEP 学校 · 实龙岗区传统名校 · 学术成绩优异",
     properties:[
       {name:"Affinity at Serangoon",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1550,price:"$1.0M–2.0M",units:1052,txns:62,dist:"0.6km",lat:1.3645,lng:103.8740},
       {name:"The Garden Residences",type:"Condo",tenure:"99-yr",top:2022,avgPsf:1600,price:"$1.1M–2.1M",units:613,txns:38,dist:"0.7km",lat:1.3660,lng:103.8700},
       {name:"Kensington Square",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1400,price:"$600K–1.0M",units:674,txns:25,dist:"0.8km",lat:1.3615,lng:103.8750},
+      {name:"Nin Residence",type:"Condo",tenure:"99-yr",top:2014,avgPsf:1250,price:"$850K–1.4M",units:219,txns:12,dist:"0.5km",lat:1.3650,lng:103.8695},
       {name:"Blk 147 Serangoon North Ave 1",type:"HDB",tenure:"99-yr",top:1984,avgPsf:520,price:"$380K–500K",units:0,txns:9,dist:"0.4km",lat:1.3640,lng:103.8705},
-      {name:"Blk 157 Serangoon North Ave 1",type:"HDB",tenure:"99-yr",top:1986,avgPsf:530,price:"$390K–510K",units:0,txns:11,dist:"0.5km",lat:1.3625,lng:103.8710},
-      {name:"Nin Residence",type:"Condo",tenure:"99-yr",top:2014,avgPsf:1250,price:"$850K–1.4M",units:219,txns:12,dist:"0.5km",lat:1.3650,lng:103.8695}
+      {name:"Blk 157 Serangoon North Ave 1",type:"HDB",tenure:"99-yr",top:1986,avgPsf:530,price:"$390K–510K",units:0,txns:11,dist:"0.5km",lat:1.3625,lng:103.8710}
     ]
   },
   {
-    rank:5, name:"St. Hilda's Primary", nameZh:"圣希尔达小学",
-    addr:"2 Tampines Ave 3, S529706", town:"Tampines", region:"east",
+    rank:9, name:"CHIJ St. Nicholas Girls' School", nameZh:"圣尼各拉女校",
+    addr:"501 Ang Mo Kio Street 13, S569405", town:"宏茂桥 Ang Mo Kio", region:"central",
+    type:"Govt-aided", gender:"Girls", sap:true, gep:false,
+    lat:1.3730, lng:103.8489,
+    note:"SAP 女校 · 宏茂桥区 · IJ 系列顶尖女校",
+    properties:[
+      {name:"The Panorama",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1350,price:"$900K–1.6M",units:698,txns:30,dist:"0.6km",lat:1.3710,lng:103.8510},
+      {name:"Thomson Impressions",type:"Condo",tenure:"99-yr",top:2018,avgPsf:1450,price:"$850K–1.4M",units:288,txns:18,dist:"0.7km",lat:1.3750,lng:103.8470},
+      {name:"Sunrise Gardens",type:"Condo",tenure:"FH",top:1996,avgPsf:900,price:"$700K–1.1M",units:58,txns:5,dist:"0.8km",lat:1.3720,lng:103.8520},
+      {name:"Blk 528 Ang Mo Kio Ave 10",type:"HDB",tenure:"99-yr",top:1992,avgPsf:480,price:"$380K–480K",units:0,txns:10,dist:"0.3km",lat:1.3735,lng:103.8495},
+      {name:"Blk 534 Ang Mo Kio Ave 10",type:"HDB",tenure:"99-yr",top:1993,avgPsf:490,price:"$390K–500K",units:0,txns:12,dist:"0.4km",lat:1.3740,lng:103.8480}
+    ]
+  },
+  {
+    rank:10, name:"Pei Hwa Presbyterian Primary", nameZh:"培华长老会小学",
+    addr:"3 Jalan Haji Alias, S268459", town:"武吉知马 Bukit Timah", region:"central",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
+    lat:1.3377, lng:103.7830,
+    note:"SAP 学校 · 武吉知马优质学区 · 长老会传统",
+    properties:[
+      {name:"Forett at Bukit Timah",type:"Condo",tenure:"FH",top:2024,avgPsf:2150,price:"$1.5M–3.2M",units:633,txns:48,dist:"0.6km",lat:1.3400,lng:103.7810},
+      {name:"Fourth Avenue Residences",type:"Condo",tenure:"99-yr",top:2023,avgPsf:2100,price:"$1.4M–3.0M",units:476,txns:42,dist:"0.7km",lat:1.3355,lng:103.7860},
+      {name:"The Linq @ Beauty World",type:"Condo",tenure:"99-yr",top:2024,avgPsf:1950,price:"$1.0M–2.0M",units:120,txns:15,dist:"0.5km",lat:1.3365,lng:103.7845},
+      {name:"Daintree Residence",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1850,price:"$1.0M–1.8M",units:327,txns:32,dist:"0.8km",lat:1.3395,lng:103.7800},
+      {name:"Mayfair Modern",type:"Condo",tenure:"99-yr",top:2023,avgPsf:2050,price:"$1.2M–2.5M",units:171,txns:25,dist:"0.9km",lat:1.3350,lng:103.7810}
+    ]
+  },
+  {
+    rank:11, name:"Anglo-Chinese School (Primary)", nameZh:"英华学校（小学）",
+    addr:"50 Barker Road, S309918", town:"诺维娜 Novena", region:"central",
+    type:"Govt-aided", gender:"Boys", sap:false, gep:true,
+    lat:1.3214, lng:103.8405,
+    note:"GEP 学校 · 诺维娜男校 · 英华体系 · 卫理公会传统",
+    properties:[
+      {name:"Pullman Residences Newton",type:"Condo",tenure:"FH",top:2024,avgPsf:2950,price:"$2.5M–6.0M",units:340,txns:28,dist:"0.5km",lat:1.3230,lng:103.8385},
+      {name:"Newton Suites",type:"Condo",tenure:"FH",top:2007,avgPsf:1950,price:"$1.5M–3.0M",units:118,txns:12,dist:"0.6km",lat:1.3200,lng:103.8420},
+      {name:"8 Saint Thomas",type:"Condo",tenure:"FH",top:2018,avgPsf:2450,price:"$2.0M–5.0M",units:250,txns:18,dist:"0.7km",lat:1.3195,lng:103.8380},
+      {name:"The Atelier",type:"Condo",tenure:"FH",top:2025,avgPsf:2700,price:"$1.8M–3.5M",units:120,txns:8,dist:"0.8km",lat:1.3240,lng:103.8430},
+      {name:"Blk 93 Toa Payoh Lorong 4",type:"HDB",tenure:"99-yr",top:1982,avgPsf:550,price:"$400K–530K",units:0,txns:8,dist:"0.9km",lat:1.3190,lng:103.8440}
+    ]
+  },
+  {
+    rank:12, name:"Methodist Girls' School (Primary)", nameZh:"美以美女校（小学）",
+    addr:"11 Blackmore Drive, S599986", town:"武吉知马 Bukit Timah", region:"central",
+    type:"Govt-aided", gender:"Girls", sap:false, gep:false,
+    lat:1.3305, lng:103.7982,
+    note:"知名女校 · 武吉知马核心 · 卫理公会体系",
+    properties:[
+      {name:"Royalgreen",type:"Condo",tenure:"FH",top:2023,avgPsf:2750,price:"$2.0M–4.5M",units:285,txns:28,dist:"0.6km",lat:1.3285,lng:103.8010},
+      {name:"Maplewoods",type:"Condo",tenure:"FH",top:2002,avgPsf:1550,price:"$1.8M–3.5M",units:697,txns:22,dist:"0.5km",lat:1.3320,lng:103.7960},
+      {name:"Pollen & Bleu",type:"Condo",tenure:"FH",top:2017,avgPsf:2150,price:"$1.5M–3.0M",units:106,txns:10,dist:"0.7km",lat:1.3290,lng:103.7970},
+      {name:"Leedon Green",type:"Condo",tenure:"FH",top:2023,avgPsf:2550,price:"$1.8M–4.5M",units:638,txns:45,dist:"0.8km",lat:1.3280,lng:103.8000},
+      {name:"D'Leedon",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1750,price:"$1.5M–3.5M",units:1715,txns:55,dist:"0.9km",lat:1.3270,lng:103.8020}
+    ]
+  },
+  {
+    rank:13, name:"St. Hilda's Primary School", nameZh:"圣希尔达小学",
+    addr:"2 Tampines Ave 3, S529706", town:"淡滨尼 Tampines", region:"east",
     type:"Govt-aided", gender:"Mixed", sap:false, gep:true,
-    ratio:3.15, applicants:129, vacancies:41,
     lat:1.3536, lng:103.9442,
-    note:"GEP 学校 · 淡滨尼区学术标杆",
+    note:"GEP 学校 · 淡滨尼区学术标杆 · 东部名校",
     properties:[
       {name:"Parktown Residence",type:"Condo",tenure:"99-yr",top:2028,avgPsf:1950,price:"$1.2M–2.4M",units:1193,txns:0,dist:"0.7km",lat:1.3560,lng:103.9480},
       {name:"Aurelle of Tampines EC",type:"EC",tenure:"99-yr",top:2028,avgPsf:1500,price:"$1.1M–1.7M",units:760,txns:0,dist:"0.8km",lat:1.3575,lng:103.9460},
       {name:"Tampines GreenCourt",type:"Condo",tenure:"99-yr",top:2003,avgPsf:1050,price:"$750K–1.2M",units:504,txns:20,dist:"0.5km",lat:1.3520,lng:103.9430},
       {name:"The Tapestry",type:"Condo",tenure:"99-yr",top:2022,avgPsf:1380,price:"$900K–1.6M",units:861,txns:45,dist:"0.6km",lat:1.3510,lng:103.9465},
+      {name:"Q Bay Residences",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1200,price:"$800K–1.3M",units:630,txns:18,dist:"0.9km",lat:1.3500,lng:103.9420},
       {name:"Blk 497 Tampines Ave 9",type:"HDB",tenure:"99-yr",top:1993,avgPsf:500,price:"$420K–550K",units:0,txns:10,dist:"0.3km",lat:1.3545,lng:103.9435},
-      {name:"Blk 871 Tampines St 84",type:"HDB",tenure:"99-yr",top:1996,avgPsf:510,price:"$430K–560K",units:0,txns:14,dist:"0.6km",lat:1.3555,lng:103.9455},
-      {name:"Q Bay Residences",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1200,price:"$800K–1.3M",units:630,txns:18,dist:"0.9km",lat:1.3500,lng:103.9420}
+      {name:"Blk 871 Tampines St 84",type:"HDB",tenure:"99-yr",top:1996,avgPsf:510,price:"$430K–560K",units:0,txns:14,dist:"0.6km",lat:1.3555,lng:103.9455}
     ]
   },
   {
-    rank:6, name:"South View Primary", nameZh:"南景小学",
-    addr:"6 Choa Chu Kang Central, S689762", town:"Choa Chu Kang", region:"west",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.95, applicants:127, vacancies:43,
-    lat:1.3852, lng:103.7447,
-    note:"蔡厝港中心位置 · 交通便利",
-    properties:[
-      {name:"iNz Residence EC",type:"EC",tenure:"99-yr",top:2021,avgPsf:1100,price:"$850K–1.3M",units:497,txns:20,dist:"0.7km",lat:1.3870,lng:103.7430},
-      {name:"Kingsford Waterbay",type:"Condo",tenure:"99-yr",top:2019,avgPsf:1050,price:"$700K–1.2M",units:1165,txns:35,dist:"0.8km",lat:1.3835,lng:103.7465},
-      {name:"Blk 302 Choa Chu Kang Ave 4",type:"HDB",tenure:"99-yr",top:1992,avgPsf:470,price:"$360K–460K",units:0,txns:9,dist:"0.3km",lat:1.3860,lng:103.7440},
-      {name:"Blk 446 Choa Chu Kang Ave 4",type:"HDB",tenure:"99-yr",top:1995,avgPsf:480,price:"$380K–480K",units:0,txns:11,dist:"0.5km",lat:1.3845,lng:103.7460},
-      {name:"Yew Mei Green",type:"Condo",tenure:"99-yr",top:2001,avgPsf:880,price:"$600K–950K",units:520,txns:15,dist:"0.6km",lat:1.3840,lng:103.7420}
-    ]
-  },
-  {
-    rank:7, name:"Nan Chiau Primary", nameZh:"南侨小学",
-    addr:"50 Anchorvale Rd, S544851", town:"Sengkang", region:"north",
-    type:"Govt-aided", gender:"Mixed", sap:false, gep:false,
-    ratio:2.81, applicants:247, vacancies:88,
+    rank:14, name:"Nan Chiau Primary School", nameZh:"南侨小学",
+    addr:"50 Anchorvale Road, S544851", town:"盛港 Sengkang", region:"north",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
     lat:1.3909, lng:103.8917,
-    note:"福建会馆属校 · 盛港核心 · 最多申请人数",
+    note:"SAP 名校 · 盛港核心 · 南洋客属总会属校",
     properties:[
       {name:"The Vales EC",type:"EC",tenure:"99-yr",top:2018,avgPsf:1000,price:"$850K–1.3M",units:517,txns:25,dist:"0.5km",lat:1.3925,lng:103.8930},
       {name:"Rivercove Residences EC",type:"EC",tenure:"99-yr",top:2021,avgPsf:1050,price:"$900K–1.4M",units:628,txns:30,dist:"0.7km",lat:1.3890,lng:103.8940},
-      {name:"Blk 338 Anchorvale Cres",type:"HDB",tenure:"99-yr",top:2015,avgPsf:520,price:"$450K–580K",units:0,txns:16,dist:"0.3km",lat:1.3915,lng:103.8910},
-      {name:"Blk 355 Anchorvale Rd",type:"HDB",tenure:"99-yr",top:2016,avgPsf:530,price:"$460K–590K",units:0,txns:18,dist:"0.4km",lat:1.3920,lng:103.8925},
-      {name:"High Park Residences",type:"Condo",tenure:"99-yr",top:2019,avgPsf:1100,price:"$680K–1.3M",units:1390,txns:55,dist:"0.8km",lat:1.3895,lng:103.8895}
+      {name:"High Park Residences",type:"Condo",tenure:"99-yr",top:2019,avgPsf:1100,price:"$680K–1.3M",units:1390,txns:55,dist:"0.8km",lat:1.3895,lng:103.8895},
+      {name:"Blk 338 Anchorvale Crescent",type:"HDB",tenure:"99-yr",top:2015,avgPsf:520,price:"$450K–580K",units:0,txns:16,dist:"0.3km",lat:1.3915,lng:103.8910},
+      {name:"Blk 355 Anchorvale Road",type:"HDB",tenure:"99-yr",top:2016,avgPsf:530,price:"$460K–590K",units:0,txns:18,dist:"0.4km",lat:1.3920,lng:103.8925}
     ]
   },
   {
-    rank:8, name:"Rulang Primary", nameZh:"儒林小学",
-    addr:"6 Jurong West St 52, S649295", town:"Jurong West", region:"west",
+    rank:15, name:"Red Swastika School", nameZh:"万慈学校",
+    addr:"500 Bedok North Ave 3, S469680", town:"勿洛 Bedok", region:"east",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
+    lat:1.3340, lng:103.9340,
+    note:"SAP 学校 · 勿洛区 · 华文教育传统 · 红卍字会创办",
+    properties:[
+      {name:"The Glades",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1350,price:"$900K–1.5M",units:726,txns:35,dist:"0.5km",lat:1.3355,lng:103.9360},
+      {name:"Bedok Residences",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1300,price:"$800K–1.4M",units:583,txns:28,dist:"0.6km",lat:1.3325,lng:103.9320},
+      {name:"Tanamera Crest",type:"Condo",tenure:"99-yr",top:2004,avgPsf:1050,price:"$680K–1.0M",units:292,txns:12,dist:"0.8km",lat:1.3320,lng:103.9370},
+      {name:"Blk 538 Bedok North St 3",type:"HDB",tenure:"99-yr",top:1993,avgPsf:450,price:"$350K–450K",units:0,txns:10,dist:"0.3km",lat:1.3345,lng:103.9345},
+      {name:"Blk 510 Bedok North Ave 2",type:"HDB",tenure:"99-yr",top:1990,avgPsf:440,price:"$340K–430K",units:0,txns:8,dist:"0.4km",lat:1.3335,lng:103.9330}
+    ]
+  },
+  {
+    rank:16, name:"Kong Hwa School", nameZh:"光华学校",
+    addr:"350 Guillemard Road, S399775", town:"芽笼 Geylang", region:"east",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
+    lat:1.3130, lng:103.8830,
+    note:"SAP 学校 · 芽笼区 · 华侨中学体系 · 华文教育重镇",
+    properties:[
+      {name:"Mori",type:"Condo",tenure:"FH",top:2024,avgPsf:2150,price:"$1.2M–2.0M",units:137,txns:18,dist:"0.5km",lat:1.3145,lng:103.8850},
+      {name:"Arena Residences",type:"Condo",tenure:"FH",top:2021,avgPsf:1850,price:"$900K–1.5M",units:98,txns:12,dist:"0.7km",lat:1.3115,lng:103.8810},
+      {name:"Rezi 24",type:"Condo",tenure:"FH",top:2020,avgPsf:1750,price:"$850K–1.3M",units:110,txns:10,dist:"0.6km",lat:1.3140,lng:103.8815},
+      {name:"The Waterina",type:"Condo",tenure:"FH",top:2021,avgPsf:1950,price:"$1.5M–3.0M",units:98,txns:10,dist:"0.8km",lat:1.3120,lng:103.8860},
+      {name:"Blk 14 Jalan Klinik",type:"HDB",tenure:"99-yr",top:1978,avgPsf:500,price:"$380K–500K",units:0,txns:8,dist:"0.3km",lat:1.3135,lng:103.8825},
+      {name:"Blk 16 Jalan Klinik",type:"HDB",tenure:"99-yr",top:1978,avgPsf:510,price:"$390K–510K",units:0,txns:6,dist:"0.4km",lat:1.3125,lng:103.8835}
+    ]
+  },
+  {
+    rank:17, name:"St. Joseph's Institution Junior", nameZh:"圣若瑟书院附小",
+    addr:"3 Essex Road, S309331", town:"诺维娜 Novena", region:"central",
+    type:"Govt-aided", gender:"Boys", sap:false, gep:false,
+    lat:1.3180, lng:103.8440,
+    note:"知名男校 · 诺维娜核心 · 拉萨尔修士会传统 · 历史悠久",
+    properties:[
+      {name:"Pullman Residences Newton",type:"Condo",tenure:"FH",top:2024,avgPsf:2950,price:"$2.5M–6.0M",units:340,txns:28,dist:"0.7km",lat:1.3200,lng:103.8415},
+      {name:"8 Saint Thomas",type:"Condo",tenure:"FH",top:2018,avgPsf:2450,price:"$2.0M–5.0M",units:250,txns:18,dist:"0.5km",lat:1.3165,lng:103.8420},
+      {name:"One Balmoral",type:"Condo",tenure:"FH",top:2015,avgPsf:2200,price:"$2.0M–4.0M",units:91,txns:8,dist:"0.6km",lat:1.3195,lng:103.8460},
+      {name:"Newton Edge",type:"Condo",tenure:"99-yr",top:2006,avgPsf:1550,price:"$900K–1.4M",units:56,txns:5,dist:"0.8km",lat:1.3175,lng:103.8470},
+      {name:"Blk 41 Cambridge Road",type:"HDB",tenure:"99-yr",top:1980,avgPsf:540,price:"$380K–480K",units:0,txns:6,dist:"0.9km",lat:1.3190,lng:103.8455}
+    ]
+  },
+  {
+    rank:18, name:"Singapore Chinese Girls' Primary", nameZh:"新加坡女子小学",
+    addr:"2 Dunearn Road, S309384", town:"诺维娜 Novena", region:"central",
+    type:"Govt-aided", gender:"Girls", sap:false, gep:false,
+    lat:1.3200, lng:103.8360,
+    note:"知名女校 · 诺维娜区 · 华族女子教育传统 · 历史名校",
+    properties:[
+      {name:"D'Leedon",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1750,price:"$1.5M–3.5M",units:1715,txns:55,dist:"0.6km",lat:1.3220,lng:103.8340},
+      {name:"Leedon Green",type:"Condo",tenure:"FH",top:2023,avgPsf:2550,price:"$1.8M–4.5M",units:638,txns:45,dist:"0.5km",lat:1.3185,lng:103.8345},
+      {name:"Royalgreen",type:"Condo",tenure:"FH",top:2023,avgPsf:2750,price:"$2.0M–4.5M",units:285,txns:28,dist:"0.7km",lat:1.3210,lng:103.8390},
+      {name:"The Atelier",type:"Condo",tenure:"FH",top:2025,avgPsf:2700,price:"$1.8M–3.5M",units:120,txns:8,dist:"0.8km",lat:1.3215,lng:103.8395},
+      {name:"8 Saint Thomas",type:"Condo",tenure:"FH",top:2018,avgPsf:2450,price:"$2.0M–5.0M",units:250,txns:18,dist:"0.9km",lat:1.3190,lng:103.8380}
+    ]
+  },
+  {
+    rank:19, name:"Chongfu School", nameZh:"崇福学校",
+    addr:"31 Yishun Street 22, S768577", town:"义顺 Yishun", region:"north",
+    type:"Govt-aided", gender:"Mixed", sap:false, gep:false,
+    lat:1.4286, lng:103.8328,
+    note:"热门邻里名校 · 义顺社区 · 福建会馆属校 · 北部明星",
+    properties:[
+      {name:"North Gaia EC",type:"EC",tenure:"99-yr",top:2025,avgPsf:1200,price:"$1.1M–2.0M",units:616,txns:616,dist:"0.4km",lat:1.4310,lng:103.8340},
+      {name:"The Criterion EC",type:"EC",tenure:"99-yr",top:2019,avgPsf:1050,price:"$950K–1.4M",units:505,txns:28,dist:"0.7km",lat:1.4260,lng:103.8360},
+      {name:"Symphony Suites",type:"Condo",tenure:"99-yr",top:2018,avgPsf:1080,price:"$780K–1.3M",units:660,txns:22,dist:"0.8km",lat:1.4250,lng:103.8310},
+      {name:"Yishun Sapphire",type:"Condo",tenure:"99-yr",top:2008,avgPsf:850,price:"$580K–880K",units:298,txns:10,dist:"0.9km",lat:1.4305,lng:103.8295},
+      {name:"Blk 223 Yishun St 21",type:"HDB",tenure:"99-yr",top:1990,avgPsf:450,price:"$350K–430K",units:0,txns:8,dist:"0.3km",lat:1.4295,lng:103.8315},
+      {name:"Blk 334 Yishun Ring Road",type:"HDB",tenure:"99-yr",top:1992,avgPsf:460,price:"$360K–450K",units:0,txns:12,dist:"0.5km",lat:1.4275,lng:103.8345}
+    ]
+  },
+  {
+    rank:20, name:"Rulang Primary School", nameZh:"儒廊小学",
+    addr:"6 Jurong West Street 52, S649295", town:"裕廊西 Jurong West", region:"west",
     type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.80, applicants:115, vacancies:41,
     lat:1.3401, lng:103.6988,
-    note:"裕廊西区热门学校 · 社区口碑佳",
+    note:"热门邻里名校 · 裕廊西 · 社区口碑极佳 · PSLE 成绩突出",
     properties:[
       {name:"Sora",type:"Condo",tenure:"99-yr",top:2027,avgPsf:1800,price:"$1.0M–2.0M",units:440,txns:0,dist:"0.8km",lat:1.3380,lng:103.6960},
       {name:"Lake Grande",type:"Condo",tenure:"99-yr",top:2021,avgPsf:1450,price:"$900K–1.8M",units:710,txns:32,dist:"0.7km",lat:1.3415,lng:103.7005},
       {name:"J Gateway",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1350,price:"$750K–1.5M",units:738,txns:28,dist:"0.9km",lat:1.3395,lng:103.7020},
       {name:"Blk 523 Jurong West St 52",type:"HDB",tenure:"99-yr",top:1994,avgPsf:440,price:"$340K–430K",units:0,txns:8,dist:"0.2km",lat:1.3405,lng:103.6995},
       {name:"Blk 539 Jurong West Ave 1",type:"HDB",tenure:"99-yr",top:1995,avgPsf:450,price:"$350K–440K",units:0,txns:10,dist:"0.4km",lat:1.3390,lng:103.6975}
-    ]
-  },
-  {
-    rank:9, name:"Northland Primary", nameZh:"北地小学",
-    addr:"30 Yishun Ring Rd, S768007", town:"Yishun", region:"north",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.74, applicants:170, vacancies:62,
-    lat:1.4245, lng:103.8380,
-    note:"义顺成熟社区 · 高申请量",
-    properties:[
-      {name:"North Gaia EC",type:"EC",tenure:"99-yr",top:2025,avgPsf:1200,price:"$1.1M–2.0M",units:616,txns:616,dist:"0.6km",lat:1.4310,lng:103.8340},
-      {name:"The Wisteria",type:"Condo",tenure:"99-yr",top:2017,avgPsf:950,price:"$680K–1.1M",units:144,txns:10,dist:"0.7km",lat:1.4235,lng:103.8365},
-      {name:"Blk 101 Yishun Ring Rd",type:"HDB",tenure:"99-yr",top:1985,avgPsf:430,price:"$320K–400K",units:0,txns:7,dist:"0.3km",lat:1.4250,lng:103.8375},
-      {name:"Blk 123 Yishun St 11",type:"HDB",tenure:"99-yr",top:1987,avgPsf:440,price:"$330K–420K",units:0,txns:10,dist:"0.5km",lat:1.4260,lng:103.8395},
-      {name:"Nine Residences",type:"Condo",tenure:"FH",top:2016,avgPsf:900,price:"$520K–880K",units:34,txns:5,dist:"0.8km",lat:1.4230,lng:103.8360}
-    ]
-  },
-  {
-    rank:10, name:"Angsana Primary", nameZh:"安桑纳小学",
-    addr:"1 Tampines St 22, S529360", town:"Tampines", region:"east",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.58, applicants:155, vacancies:60,
-    lat:1.3540, lng:103.9550,
-    note:"排名飙升 92 位 · 东部新星",
-    properties:[
-      {name:"The Alps Residences",type:"Condo",tenure:"99-yr",top:2019,avgPsf:1250,price:"$850K–1.5M",units:626,txns:30,dist:"0.5km",lat:1.3555,lng:103.9565},
-      {name:"Tampines GreenRidges",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1180,price:"$780K–1.3M",units:396,txns:18,dist:"0.7km",lat:1.3525,lng:103.9540},
-      {name:"Blk 267 Tampines St 21",type:"HDB",tenure:"99-yr",top:1990,avgPsf:480,price:"$370K–470K",units:0,txns:9,dist:"0.3km",lat:1.3545,lng:103.9545},
-      {name:"Blk 270 Tampines St 21",type:"HDB",tenure:"99-yr",top:1990,avgPsf:490,price:"$380K–480K",units:0,txns:11,dist:"0.4km",lat:1.3535,lng:103.9555},
-      {name:"A Treasure Trove",type:"Condo",tenure:"99-yr",top:2014,avgPsf:1150,price:"$800K–1.4M",units:882,txns:35,dist:"0.8km",lat:1.3560,lng:103.9530}
-    ]
-  },
-  {
-    rank:11, name:"Wellington Primary", nameZh:"惠灵顿小学",
-    addr:"10 Wellington Circle, S757719", town:"Sembawang", region:"north",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.53, applicants:114, vacancies:45,
-    lat:1.4495, lng:103.8240,
-    note:"三巴旺社区学校 · 稳定增长",
-    properties:[
-      {name:"The Visionaire EC",type:"EC",tenure:"99-yr",top:2019,avgPsf:950,price:"$750K–1.1M",units:632,txns:25,dist:"0.6km",lat:1.4480,lng:103.8255},
-      {name:"Canberra Residences",type:"Condo",tenure:"99-yr",top:2016,avgPsf:880,price:"$650K–1.0M",units:320,txns:15,dist:"0.8km",lat:1.4510,lng:103.8260},
-      {name:"Blk 580 Canberra Link",type:"HDB",tenure:"99-yr",top:2020,avgPsf:520,price:"$450K–570K",units:0,txns:12,dist:"0.4km",lat:1.4500,lng:103.8245},
-      {name:"Blk 401 Sembawang Dr",type:"HDB",tenure:"99-yr",top:2000,avgPsf:430,price:"$330K–420K",units:0,txns:8,dist:"0.5km",lat:1.4488,lng:103.8230}
-    ]
-  },
-  {
-    rank:12, name:"Poi Ching School", nameZh:"培青学校",
-    addr:"21 Tampines St 71, S529067", town:"Tampines", region:"east",
-    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
-    ratio:2.43, applicants:192, vacancies:79,
-    lat:1.3454, lng:103.9527,
-    note:"SAP 学校 · 淡滨尼南部 · 高申请量",
-    properties:[
-      {name:"The Tampines Trilliant EC",type:"EC",tenure:"99-yr",top:2015,avgPsf:1000,price:"$800K–1.2M",units:590,txns:22,dist:"0.6km",lat:1.3470,lng:103.9540},
-      {name:"The Santorini",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1100,price:"$720K–1.2M",units:597,txns:20,dist:"0.7km",lat:1.3440,lng:103.9510},
-      {name:"Blk 869 Tampines St 83",type:"HDB",tenure:"99-yr",top:1996,avgPsf:490,price:"$400K–510K",units:0,txns:10,dist:"0.3km",lat:1.3460,lng:103.9520},
-      {name:"Blk 723 Tampines St 72",type:"HDB",tenure:"99-yr",top:1993,avgPsf:480,price:"$390K–490K",units:0,txns:12,dist:"0.5km",lat:1.3445,lng:103.9535},
-      {name:"Waterview",type:"Condo",tenure:"99-yr",top:2014,avgPsf:1050,price:"$680K–1.1M",units:696,txns:25,dist:"0.8km",lat:1.3435,lng:103.9545}
-    ]
-  },
-  {
-    rank:13, name:"Gongshang Primary", nameZh:"公商小学",
-    addr:"1 Tampines St 42, S529174", town:"Tampines", region:"east",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.41, applicants:99, vacancies:41,
-    lat:1.3530, lng:103.9505,
-    note:"淡滨尼中心地带 · 便利交通",
-    properties:[
-      {name:"The Tapestry",type:"Condo",tenure:"99-yr",top:2022,avgPsf:1380,price:"$900K–1.6M",units:861,txns:45,dist:"0.5km",lat:1.3510,lng:103.9485},
-      {name:"Blk 497 Tampines Ave 9",type:"HDB",tenure:"99-yr",top:1993,avgPsf:500,price:"$420K–540K",units:0,txns:10,dist:"0.4km",lat:1.3540,lng:103.9510},
-      {name:"Blk 230 Tampines St 21",type:"HDB",tenure:"99-yr",top:1988,avgPsf:470,price:"$360K–460K",units:0,txns:8,dist:"0.5km",lat:1.3525,lng:103.9495},
-      {name:"Tampines GreenCourt",type:"Condo",tenure:"99-yr",top:2003,avgPsf:1050,price:"$750K–1.2M",units:504,txns:20,dist:"0.7km",lat:1.3520,lng:103.9520}
-    ]
-  },
-  {
-    rank:14, name:"Holy Innocents' Primary", nameZh:"圣婴小学",
-    addr:"5 Lorong Low Koon, S536449", town:"Hougang", region:"central",
-    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
-    ratio:2.40, applicants:96, vacancies:40,
-    lat:1.3723, lng:103.8892,
-    note:"SAP 学校 · 后港区域",
-    properties:[
-      {name:"Riverfront Residences",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1350,price:"$850K–1.6M",units:1472,txns:55,dist:"0.7km",lat:1.3740,lng:103.8870},
-      {name:"The Florence Residences",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1400,price:"$900K–1.7M",units:1410,txns:60,dist:"0.8km",lat:1.3710,lng:103.8910},
-      {name:"Blk 650 Hougang Ave 8",type:"HDB",tenure:"99-yr",top:1998,avgPsf:480,price:"$380K–480K",units:0,txns:10,dist:"0.4km",lat:1.3730,lng:103.8900},
-      {name:"Blk 673 Hougang Ave 8",type:"HDB",tenure:"99-yr",top:1999,avgPsf:490,price:"$390K–500K",units:0,txns:12,dist:"0.5km",lat:1.3715,lng:103.8885}
-    ]
-  },
-  {
-    rank:15, name:"Bukit Panjang Primary", nameZh:"武吉班让小学",
-    addr:"5 Bukit Panjang Ring Rd, S679943", town:"Bukit Panjang", region:"west",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.37, applicants:102, vacancies:43,
-    lat:1.3813, lng:103.7630,
-    note:"武吉班让成熟区 · 近 Downtown Line",
-    properties:[
-      {name:"The Reserve Residences",type:"Condo",tenure:"99-yr",top:2028,avgPsf:2100,price:"$1.2M–2.5M",units:732,txns:0,dist:"0.9km",lat:1.3790,lng:103.7650},
-      {name:"Senja Residences EC",type:"EC",tenure:"99-yr",top:2015,avgPsf:900,price:"$750K–1.1M",units:602,txns:18,dist:"0.6km",lat:1.3825,lng:103.7615},
-      {name:"Blk 283 Bukit Panjang Ring Rd",type:"HDB",tenure:"99-yr",top:1993,avgPsf:470,price:"$350K–450K",units:0,txns:9,dist:"0.3km",lat:1.3818,lng:103.7625},
-      {name:"Blk 258 Bangkit Rd",type:"HDB",tenure:"99-yr",top:1990,avgPsf:460,price:"$340K–440K",units:0,txns:10,dist:"0.5km",lat:1.3800,lng:103.7640},
-      {name:"The Dairy Farm",type:"Condo",tenure:"99-yr",top:2024,avgPsf:1500,price:"$980K–1.6M",units:460,txns:22,dist:"0.8km",lat:1.3830,lng:103.7600}
-    ]
-  },
-  {
-    rank:16, name:"Ai Tong School", nameZh:"爱同学校",
-    addr:"100 Bright Hill Dr, S579646", town:"Bishan", region:"central",
-    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
-    ratio:2.29, applicants:94, vacancies:41,
-    lat:1.3605, lng:103.8357,
-    note:"SAP 名校 · 碧山核心 · 福建会馆属校",
-    properties:[
-      {name:"JadeScape",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1850,price:"$1.2M–2.8M",units:1206,txns:65,dist:"0.6km",lat:1.3585,lng:103.8380},
-      {name:"Sky Vue",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1650,price:"$1.1M–2.2M",units:694,txns:30,dist:"0.7km",lat:1.3620,lng:103.8340},
-      {name:"Sky Habitat",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1700,price:"$1.2M–2.5M",units:509,txns:25,dist:"0.8km",lat:1.3590,lng:103.8370},
-      {name:"Blk 230 Bishan St 23",type:"HDB",tenure:"99-yr",top:1993,avgPsf:620,price:"$500K–660K",units:0,txns:12,dist:"0.4km",lat:1.3610,lng:103.8350},
-      {name:"Blk 283 Bishan St 22",type:"HDB",tenure:"99-yr",top:1995,avgPsf:630,price:"$510K–680K",units:0,txns:14,dist:"0.5km",lat:1.3600,lng:103.8365}
-    ]
-  },
-  {
-    rank:17, name:"Sengkang Green Primary", nameZh:"盛港绿小学",
-    addr:"15 Sengkang East Way, S541762", town:"Sengkang", region:"north",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.24, applicants:94, vacancies:42,
-    lat:1.3924, lng:103.8950,
-    note:"新兴热门 · 盛港东部 · 年轻家庭聚集",
-    properties:[
-      {name:"Parc Botannia",type:"Condo",tenure:"99-yr",top:2021,avgPsf:1150,price:"$780K–1.3M",units:735,txns:35,dist:"0.5km",lat:1.3940,lng:103.8965},
-      {name:"Blk 334C Sengkang East Way",type:"HDB",tenure:"99-yr",top:2018,avgPsf:530,price:"$450K–580K",units:0,txns:14,dist:"0.3km",lat:1.3930,lng:103.8945},
-      {name:"Blk 337A Anchorvale Cres",type:"HDB",tenure:"99-yr",top:2017,avgPsf:520,price:"$440K–570K",units:0,txns:16,dist:"0.4km",lat:1.3918,lng:103.8940},
-      {name:"Jewel @ Buangkok",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1000,price:"$680K–1.1M",units:616,txns:22,dist:"0.8km",lat:1.3910,lng:103.8970}
-    ]
-  },
-  {
-    rank:18, name:"Frontier Primary", nameZh:"丰禾小学",
-    addr:"30 Jurong West St 61, S648370", town:"Jurong West", region:"west",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.07, applicants:89, vacancies:43,
-    lat:1.3415, lng:103.6872,
-    note:"裕廊西南端 · 靠近裕廊湖花园",
-    properties:[
-      {name:"Lakepoint Condo",type:"Condo",tenure:"99-yr",top:2001,avgPsf:850,price:"$550K–900K",units:350,txns:12,dist:"0.6km",lat:1.3400,lng:103.6860},
-      {name:"Blk 665 Jurong West St 64",type:"HDB",tenure:"99-yr",top:1997,avgPsf:420,price:"$320K–400K",units:0,txns:8,dist:"0.3km",lat:1.3420,lng:103.6880},
-      {name:"Blk 674 Jurong West St 65",type:"HDB",tenure:"99-yr",top:1998,avgPsf:430,price:"$330K–410K",units:0,txns:10,dist:"0.5km",lat:1.3410,lng:103.6890},
-      {name:"Lakeshore Condo",type:"Condo",tenure:"99-yr",top:2006,avgPsf:920,price:"$600K–1.0M",units:848,txns:28,dist:"0.9km",lat:1.3390,lng:103.6850}
-    ]
-  },
-  {
-    rank:19, name:"Xinmin Primary", nameZh:"新民小学",
-    addr:"15 Hougang St 21, S538947", town:"Hougang", region:"central",
-    type:"Government", gender:"Mixed", sap:false, gep:false,
-    ratio:2.07, applicants:93, vacancies:45,
-    lat:1.3690, lng:103.8855,
-    note:"后港社区学校 · 稳步上升",
-    properties:[
-      {name:"The Florence Residences",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1400,price:"$900K–1.7M",units:1410,txns:60,dist:"0.6km",lat:1.3710,lng:103.8870},
-      {name:"The Minton",type:"Condo",tenure:"99-yr",top:2013,avgPsf:1200,price:"$800K–1.4M",units:1145,txns:40,dist:"0.7km",lat:1.3680,lng:103.8840},
-      {name:"Blk 448 Hougang Ave 10",type:"HDB",tenure:"99-yr",top:1995,avgPsf:470,price:"$370K–470K",units:0,txns:10,dist:"0.3km",lat:1.3695,lng:103.8850},
-      {name:"Blk 475 Hougang Ave 10",type:"HDB",tenure:"99-yr",top:1996,avgPsf:480,price:"$380K–480K",units:0,txns:12,dist:"0.5km",lat:1.3685,lng:103.8865}
-    ]
-  },
-  {
-    rank:20, name:"CHIJ Primary (Toa Payoh)", nameZh:"圣婴女校 (大巴窑)",
-    addr:"628 Lorong 1 Toa Payoh, S319765", town:"Toa Payoh", region:"central",
-    type:"Govt-aided", gender:"Girls", sap:false, gep:false,
-    ratio:2.02, applicants:83, vacancies:41,
-    lat:1.3365, lng:103.8485,
-    note:"女校 · 大巴窑核心 · 天主教传统",
-    properties:[
-      {name:"Gem Residences",type:"Condo",tenure:"99-yr",top:2020,avgPsf:1650,price:"$1.0M–2.0M",units:578,txns:30,dist:"0.5km",lat:1.3380,lng:103.8500},
-      {name:"Trevista",type:"Condo",tenure:"99-yr",top:2012,avgPsf:1500,price:"$950K–1.8M",units:590,txns:25,dist:"0.7km",lat:1.3350,lng:103.8470},
-      {name:"Blk 1 Lorong 7 Toa Payoh",type:"HDB",tenure:"99-yr",top:1980,avgPsf:560,price:"$400K–520K",units:0,txns:10,dist:"0.3km",lat:1.3370,lng:103.8480},
-      {name:"Blk 175 Lorong 1 Toa Payoh",type:"HDB",tenure:"99-yr",top:1985,avgPsf:570,price:"$420K–540K",units:0,txns:14,dist:"0.4km",lat:1.3360,lng:103.8490},
-      {name:"Oleander Towers",type:"Condo",tenure:"99-yr",top:2003,avgPsf:1300,price:"$800K–1.4M",units:218,txns:10,dist:"0.8km",lat:1.3345,lng:103.8505}
     ]
   }
 ];
@@ -617,7 +614,7 @@ function initMap() {
     });
     const m = L.marker([s.lat, s.lng], { icon })
       .addTo(map)
-      .bindPopup(`<b>#${s.rank} ${s.name}</b><br>${s.nameZh}<br><small>${s.town} · 竞争比 ${s.ratio}</small>`);
+      .bindPopup(`<b>#${s.rank} ${s.name}</b><br>${s.nameZh}<br><small>${s.town}</small>`);
     m.on('click', () => showProperties(i));
     schoolMarkers.push(m);
   });
@@ -668,27 +665,26 @@ function renderSchools() {
   if (circleLayer) { map.removeLayer(circleLayer); circleLayer = null; }
   map.flyTo([1.3521, 103.8198], 12, { duration: 0.5 });
 
-  grid.innerHTML = filtered.map((s, i) => {
+  grid.innerHTML = filtered.map(s => {
     const idx = SCHOOLS.indexOf(s);
     const rankClass = s.rank <= 5 ? 'rank-gold' : s.rank <= 10 ? 'rank-silver' : 'rank-bronze';
     let tags = `<span class="s-tag tag-region">${s.town}</span>`;
-    if (s.sap) tags += '<span class="s-tag tag-sap">SAP</span>';
     if (s.gep) tags += '<span class="s-tag tag-gep">GEP</span>';
+    if (s.sap) tags += '<span class="s-tag tag-sap">SAP</span>';
     if (s.gender === 'Girls') tags += '<span class="s-tag tag-girls">女校</span>';
-    if (s.type === 'Govt-aided') tags += '<span class="s-tag tag-aided">政府资助</span>';
+    if (s.gender === 'Boys') tags += '<span class="s-tag tag-boys">男校</span>';
+    if (!s.gep && !s.sap && s.rank >= 19) tags += '<span class="s-tag tag-hot">热门邻里</span>';
 
     return `<div class="school-card" onclick="showProperties(${idx})">
       <span class="rank-badge ${rankClass}">${s.rank}</span>
       <div class="s-name">${s.name}</div>
       <div style="font-size:12px;color:var(--text-secondary);margin-left:22px;">${s.nameZh}</div>
       <div class="s-meta">${tags}</div>
-      <div class="s-stats">
-        <div class="s-stat"><span class="s-val">${s.ratio}</span><span class="s-label">竞争比 Ratio</span></div>
-        <div class="s-stat"><span class="s-val">${s.applicants}</span><span class="s-label">申请人 Apps</span></div>
-        <div class="s-stat"><span class="s-val">${s.vacancies}</span><span class="s-label">空位 Vac</span></div>
-        <div class="s-stat"><span class="s-val">${s.properties.length}</span><span class="s-label">楼盘 Props</span></div>
+      <div class="s-note">💡 ${s.note}</div>
+      <div class="s-footer">
+        <span class="s-addr">📍 ${s.addr}</span>
+        <span class="s-props">🏠 ${s.properties.length} 楼盘</span>
       </div>
-      <div class="s-addr">📍 ${s.addr}</div>
     </div>`;
   }).join('');
 }
@@ -710,9 +706,10 @@ function showProperties(idx) {
   const ecCount = s.properties.filter(p => p.type === 'EC').length;
 
   let tags = '';
-  if (s.sap) tags += '<span class="s-tag tag-sap" style="font-size:12px;">SAP</span>';
-  if (s.gep) tags += '<span class="s-tag tag-gep" style="font-size:12px;">GEP</span>';
-  if (s.gender === 'Girls') tags += '<span class="s-tag tag-girls" style="font-size:12px;">女校</span>';
+  if (s.gep) tags += '<span class="s-tag tag-gep" style="font-size:12px;">GEP</span> ';
+  if (s.sap) tags += '<span class="s-tag tag-sap" style="font-size:12px;">SAP</span> ';
+  if (s.gender === 'Girls') tags += '<span class="s-tag tag-girls" style="font-size:12px;">女校</span> ';
+  if (s.gender === 'Boys') tags += '<span class="s-tag tag-boys" style="font-size:12px;">男校</span> ';
 
   document.getElementById('propContent').innerHTML = `
     <div class="card">
@@ -721,14 +718,13 @@ function showProperties(idx) {
         #${s.rank} ${s.name} · ${s.nameZh} ${tags}
       </div>
       <div class="school-detail">
-        <div class="sd-item"><div class="sd-val">${s.ratio}</div><div class="sd-label">竞争比 Ratio</div></div>
-        <div class="sd-item"><div class="sd-val">${s.applicants}</div><div class="sd-label">Phase 2C 申请人</div></div>
-        <div class="sd-item"><div class="sd-val">${s.vacancies}</div><div class="sd-label">Phase 2C 空位</div></div>
+        <div class="sd-item"><div class="sd-val">${s.type}</div><div class="sd-label">学校类型</div></div>
+        <div class="sd-item"><div class="sd-val">${s.gender === 'Mixed' ? '男女混合' : s.gender === 'Boys' ? '男校' : '女校'}</div><div class="sd-label">性别</div></div>
+        <div class="sd-item"><div class="sd-val">${[s.gep?'GEP':'',s.sap?'SAP':''].filter(Boolean).join(' + ')||'—'}</div><div class="sd-label">认证</div></div>
         <div class="sd-item"><div class="sd-val">${condoCount}/${hdbCount}/${ecCount}</div><div class="sd-label">Condo/HDB/EC</div></div>
       </div>
       <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;">
         <b>📍 地址:</b> ${s.addr}<br>
-        <b>📋 类型:</b> ${s.type} · ${s.gender}<br>
         <b>💡 特点:</b> ${s.note}
       </div>
     </div>
