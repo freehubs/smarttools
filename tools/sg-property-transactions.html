@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新加坡TOP交易量房产 | SG Property Transaction Explorer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --primary:#0d9488;--primary-light:#14b8a6;--primary-dark:#0f766e;
+    --accent:#6366f1;--surface:#fff;--surface-alt:#f8fafc;
+    --border:#e2e8f0;--text:#1e293b;--text-sec:#64748b;--text-tri:#94a3b8;
+    --hdb:#3b82f6;--pvt:#8b5cf6;--radius:12px;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+    background:linear-gradient(135deg,#f0fdfa 0%,#e0f2fe 50%,#f0f9ff 100%);
+    color:var(--text);min-height:100vh;line-height:1.6}
+  .container{max-width:1100px;margin:0 auto;padding:32px 20px 64px}
+  header{text-align:center;margin-bottom:24px}
+  header h1{font-size:28px;font-weight:700;color:var(--primary-dark);margin-bottom:4px}
+  header p{color:var(--text-sec);font-size:13px;max-width:640px;margin:0 auto}
+  .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+  .card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+
+  /* Upload */
+  .upload-zone{border:2.5px dashed var(--border);border-radius:var(--radius);padding:48px 24px;text-align:center;
+    cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--primary);background:#f0fdfa}
+  .upload-zone .uz-icon{font-size:48px;margin-bottom:12px;opacity:.5}
+  .upload-zone .uz-text{font-size:15px;color:var(--text-sec);margin-bottom:8px}
+  .upload-zone .uz-hint{font-size:12px;color:var(--text-tri)}
+  .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .upload-actions{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+    border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;transition:all .15s}
+  .btn:hover{border-color:var(--primary);color:var(--primary)}
+  .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark);color:#fff}
+
+  /* Summary */
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .sum-card{text-align:center;padding:14px 12px;background:var(--surface-alt);border-radius:10px;border:1px solid var(--border)}
+  .sum-val{font-size:22px;font-weight:700;color:var(--primary-dark)}
+  .sum-label{font-size:11px;color:var(--text-tri);margin-top:2px}
+
+  /* Map */
+  #map{height:400px;border-radius:var(--radius);border:1px solid var(--border);z-index:1}
+
+  /* Filters */
+  .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+  .filter-bar select,.filter-bar input[type=text]{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;
+    font-size:13px;background:var(--surface);color:var(--text);outline:none}
+  .filter-bar select:focus,.filter-bar input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+  .filter-bar input[type=text]{min-width:180px;flex:1;max-width:300px}
+  .filter-label{font-size:12px;color:var(--text-sec);font-weight:500}
+  .filter-count{margin-left:auto;font-size:12px;color:var(--text-tri)}
+
+  /* Table */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{position:sticky;top:0;background:var(--surface);padding:10px 12px;text-align:left;
+    font-weight:600;color:var(--text-sec);border-bottom:2px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none}
+  thead th:hover{color:var(--primary)}
+  thead th .sort-arrow{font-size:10px;margin-left:4px;opacity:.4}
+  thead th.sorted .sort-arrow{opacity:1;color:var(--primary)}
+  tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+  tbody tr:hover{background:#f0fdfa}
+  tbody td{padding:10px 12px;vertical-align:middle}
+  .type-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;color:#fff;white-space:nowrap}
+  .type-hdb{background:var(--hdb)}
+  .type-pvt{background:var(--pvt)}
+  .txn-bar{display:inline-block;height:6px;border-radius:3px;background:var(--primary-light);min-width:4px;vertical-align:middle;margin-left:6px}
+  .detail-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface-alt);
+    font-size:11px;cursor:pointer;color:var(--text-sec);font-family:inherit;transition:all .15s}
+  .detail-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+  /* Pagination */
+  .pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px}
+  .pagination button{padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--surface);
+    font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-sec)}
+  .pagination button:hover{border-color:var(--primary);color:var(--primary)}
+  .pagination button:disabled{opacity:.4;cursor:default}
+  .pagination .page-info{font-size:12px;color:var(--text-tri)}
+
+  /* Detail Modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.show{display:flex}
+  .modal{background:var(--surface);border-radius:var(--radius);max-width:680px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative}
+  .modal-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-tri)}
+  .modal-close:hover{color:var(--text)}
+  .modal h2{font-size:18px;font-weight:700;color:var(--primary-dark);margin-bottom:4px;padding-right:32px}
+  .modal .m-sub{font-size:13px;color:var(--text-sec);margin-bottom:16px}
+  .modal .m-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .modal .m-item{padding:10px 14px;background:var(--surface-alt);border-radius:8px;border:1px solid var(--border)}
+  .modal .m-item .m-val{font-size:16px;font-weight:700;color:var(--primary-dark)}
+  .modal .m-item .m-lbl{font-size:11px;color:var(--text-tri)}
+  .modal .m-section{font-size:13px;font-weight:600;color:var(--text);margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+  .mrt-list,.school-list{display:flex;flex-direction:column;gap:6px}
+  .mrt-item,.school-item{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;
+    background:var(--surface-alt);border-radius:6px;font-size:12px;border:1px solid var(--border)}
+  .mrt-dist,.school-dist{font-size:11px;font-weight:600;color:var(--primary);background:#f0fdfa;padding:2px 8px;border-radius:20px}
+  .price-range-bar{height:8px;background:#e2e8f0;border-radius:4px;position:relative;margin:8px 0}
+  .price-range-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--primary-light),var(--primary-dark))}
+  .price-range-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text-sec)}
+
+  .hidden{display:none !important}
+  footer{text-align:center;margin-top:36px;font-size:12px;color:var(--text-sec);line-height:1.8}
+  @media(max-width:640px){
+    .summary-grid{grid-template-columns:repeat(2,1fr)}
+    .modal .m-grid{grid-template-columns:1fr}
+    #map{height:280px}
+    .filter-bar input[type=text]{min-width:140px}
+  }
+  .leaflet-popup-content{font-family:inherit;font-size:13px;line-height:1.5}
+  .leaflet-popup-content b{color:var(--primary-dark)}
+</style>
+</head>
+<body>
+
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:1000;backdrop-filter:blur(10px)">
+  <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--text-sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>🏘️ 新加坡TOP交易量房产</h1>
+    <p>SG Property Transaction Explorer — 上传 CSV 数据，查看交易热力图、价格分析、学区与MRT信息</p>
+  </header>
+
+  <!-- Upload Section -->
+  <div class="card" id="uploadCard">
+    <div class="card-title"><span class="ic" style="background:#f0fdfa;color:var(--primary)">📂</span>上传数据 Upload CSV</div>
+    <div class="upload-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".csv">
+      <div class="uz-icon">📄</div>
+      <div class="uz-text">拖拽 CSV 文件到此处，或点击选择文件</div>
+      <div class="uz-hint">支持字段：property_name, property_type, town_district, transaction_count, avg_price, latitude, longitude 等</div>
+    </div>
+    <div class="upload-actions">
+      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">选择文件 Choose File</button>
+      <button class="btn" onclick="loadSample()">加载示例数据 Load Sample</button>
+    </div>
+    <div id="uploadError" style="color:#ef4444;font-size:13px;text-align:center;margin-top:10px"></div>
+  </div>
+
+  <!-- Dashboard (hidden until data loaded) -->
+  <div id="dashboard" class="hidden">
+
+    <div class="card">
+      <div class="card-title"><span class="ic" style="background:#f0fdfa;color:var(--primary)">📊</span>数据概览 Summary</div>
+      <div class="summary-grid" id="summaryGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="ic" style="background:#f0fdfa;color:var(--primary)">🗺️</span>交易热力图 Map
+        <span style="font-size:11px;color:var(--text-tri);margin-left:auto">点击标记查看详情</span>
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ic" style="background:#f0fdfa;color:var(--primary)">📋</span>房产列表 Property List</div>
+
+      <div class="filter-bar">
+        <span class="filter-label">筛选:</span>
+        <select id="fType" onchange="applyFilters()">
+          <option value="all">所有类型 All</option>
+          <option value="HDB">HDB 组屋</option>
+          <option value="Private">Private 私宅</option>
+        </select>
+        <select id="fTown" onchange="applyFilters()"></select>
+        <select id="fSort" onchange="applyFilters()">
+          <option value="rank">排名 Rank</option>
+          <option value="txn_desc">交易量 ↓</option>
+          <option value="price_desc">均价 ↓</option>
+          <option value="price_asc">均价 ↑</option>
+          <option value="psm_desc">单价 ↓</option>
+        </select>
+        <input type="text" id="fSearch" placeholder="搜索名称/地址..." oninput="applyFilters()">
+        <span class="filter-count" id="filterCount"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:44px">#</th>
+            <th>房产名称 Property</th>
+            <th>类型</th>
+            <th>区域 Town</th>
+            <th>交易量 Txns</th>
+            <th>均价 Avg Price</th>
+            <th>单价 PSM</th>
+            <th>户型</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:8px">
+      <button class="btn" onclick="resetData()">🔄 重新上传 Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<footer>
+  数据由用户上传 · 仅供参考，请以实际交易为准<br>
+  SmartTools — <a href="../index.html" style="color:var(--primary)">Home</a>
+</footer>
+
+<script>
+/* ═══ State ═══ */
+let allData = [], filtered = [], map, markers = [];
+let currentPage = 1;
+const PAGE_SIZE = 25;
+
+/* ═══ CSV Parser ═══ */
+function parseCSV(text) {
+  const lines = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === '\n' && !inQ) { if (cur.trim()) lines.push(cur.replace(/\r$/,'')); cur = ''; }
+    else { cur += ch; }
+  }
+  if (cur.trim()) lines.push(cur.replace(/\r$/,''));
+  if (lines.length < 2) return [];
+
+  const headers = parseLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseLine(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    return obj;
+  }).filter(d => d.property_name);
+}
+
+function parseLine(line) {
+  const r = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+    else if (ch === ',' && !inQ) { r.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  r.push(cur);
+  return r;
+}
+
+function normalizeData(raw) {
+  return raw.map((d, i) => ({
+    rank: parseInt(d.rank) || (i + 1),
+    name: d.property_name || '',
+    type: (d.property_type || '').includes('HDB') ? 'HDB' : 'Private',
+    town: d.town_district || '',
+    addr: d.address_sample || '',
+    txns: parseInt(d.transaction_count) || 0,
+    avgPrice: parseFloat(d.avg_price) || 0,
+    minPrice: parseFloat(d.min_price) || 0,
+    maxPrice: parseFloat(d.max_price) || 0,
+    avgArea: parseFloat(d.avg_area_sqm) || 0,
+    avgPsm: parseFloat(d.avg_price_per_sqm) || 0,
+    domType: d.dominant_type || '',
+    lat: parseFloat(d.latitude) || 0,
+    lng: parseFloat(d.longitude) || 0,
+    mrt: d.nearest_mrt || '',
+    mrtDist: d.mrt_distances || '',
+    schoolCount: parseInt(d.nearby_school_count) || 0,
+    schools: d.nearby_schools || ''
+  }));
+}
+
+/* ═══ Upload Handling ═══ */
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  const err = document.getElementById('uploadError');
+  err.textContent = '';
+  if (!file.name.endsWith('.csv')) { err.textContent = '请上传 .csv 文件'; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const raw = parseCSV(e.target.result);
+      if (raw.length === 0) { err.textContent = '未能解析有效数据，请检查 CSV 格式'; return; }
+      allData = normalizeData(raw);
+      initDashboard();
+    } catch (ex) { err.textContent = '解析错误: ' + ex.message; }
+  };
+  reader.readAsText(file);
+}
+
+function loadSample() {
+  const csv = `rank,property_name,property_type,town_district,address_sample,transaction_count,avg_price,min_price,max_price,avg_area_sqm,avg_price_per_sqm,dominant_type,latitude,longitude,nearest_mrt,mrt_distances,nearby_school_count,nearby_schools
+1,YISHUN - YISHUN RING RD,HDB,YISHUN,YISHUN RING RD,154,555701.61,350000,1050000,93.72,5993.66,3 ROOM,1.4304,103.8354,Yishun; Khatib; Canberra,0.12km; 1.47km; 1.56km,26,"AHMAD IBRAHIM PRIMARY SCHOOL (0.5km); CHONGFU SCHOOL (0.8km); NAVAL BASE PRIMARY SCHOOL (1.0km); NORTHLAND PRIMARY SCHOOL (1.2km)"
+2,SENGKANG - ANCHORVALE,HDB,SENGKANG,ANCHORVALE LINK,132,618500.00,380000,920000,96.50,6409.33,4 ROOM,1.3920,103.8910,Farmway; Tongkang; Sengkang,0.35km; 0.90km; 1.10km,18,"NAN CHIAU PRIMARY SCHOOL (0.4km); SENGKANG GREEN PRIMARY (0.7km); COMPASSVALE PRIMARY (1.0km)"
+3,WOODLANDS - WOODLANDS DR,HDB,WOODLANDS,WOODLANDS DR 14,128,502340.00,310000,880000,95.10,5283.28,4 ROOM,1.4382,103.7890,Woodlands; Admiralty; Marsiling,0.25km; 1.20km; 1.80km,22,"GREENWOOD PRIMARY SCHOOL (0.6km); WOODLANDS PRIMARY (0.8km); INNOVA PRIMARY (1.1km)"
+4,TAMPINES - TAMPINES ST 21,HDB,TAMPINES,TAMPINES ST 21,119,598720.00,370000,1000000,97.20,6160.70,4 ROOM,1.3540,103.9530,Tampines; Tampines East; Simei,0.30km; 1.00km; 1.50km,20,"ANGSANA PRIMARY (0.3km); GONGSHANG PRIMARY (0.5km); ST HILDA'S PRIMARY (0.8km); POI CHING SCHOOL (1.0km)"
+5,JURONG WEST - JURONG WEST ST 52,HDB,JURONG WEST,JURONG WEST ST 52,115,478900.00,300000,850000,92.40,5183.44,4 ROOM,1.3401,103.6988,Lakeside; Jurong East; Chinese Garden,0.50km; 1.30km; 1.60km,16,"RULANG PRIMARY SCHOOL (0.2km); FRONTIER PRIMARY (0.9km); JURONG PRIMARY (1.2km)"
+6,TREASURE AT TAMPINES,Private,TAMPINES,TAMPINES LANE,98,1580000.00,980000,2800000,102.50,15414.63,3 BR,1.3480,103.9600,Simei; Tampines East; Tampines,0.40km; 0.80km; 1.20km,15,"ANGSANA PRIMARY (0.5km); GONGSHANG PRIMARY (0.7km); ST HILDA'S PRIMARY (1.0km)"
+7,PARC CLEMATIS,Private,CLEMENTI,JALAN LEMPENG,87,1720000.00,1050000,3200000,95.80,17954.07,2 BR,1.3085,103.7620,Clementi; Dover; Buona Vista,0.60km; 1.10km; 1.50km,12,"NAN HUA PRIMARY (0.5km); CLEMENTI PRIMARY (0.8km); PEIYING PRIMARY (1.1km)"
+8,BEDOK - BEDOK NORTH,HDB,BEDOK,BEDOK NORTH RD,95,545200.00,340000,920000,91.80,5939.00,4 ROOM,1.3340,103.9340,Bedok; Kembangan; Tanah Merah,0.35km; 1.20km; 1.60km,19,"RED SWASTIKA SCHOOL (0.3km); BEDOK GREEN PRIMARY (0.6km); YU NENG PRIMARY (1.0km)"
+9,PUNGGOL - EDGEFIELD,HDB,PUNGGOL,EDGEFIELD PLAINS,91,610800.00,360000,950000,96.00,6362.50,4 ROOM,1.3940,103.9120,Punggol; Damai; Oasis,0.30km; 0.80km; 1.40km,14,"EDGEFIELD PRIMARY (0.2km); GREENDALE PRIMARY (0.6km); HORIZON PRIMARY (1.0km)"
+10,THE FLORENCE RESIDENCES,Private,HOUGANG,HOUGANG AVE 2,85,1450000.00,850000,2500000,88.60,16365.69,2 BR,1.3710,103.8870,Hougang; Kovan; Bartley,0.50km; 1.00km; 1.40km,17,"XINMIN PRIMARY (0.6km); HOLY INNOCENTS' PRIMARY (0.8km); HOUGANG PRIMARY (1.0km)"`;
+  allData = normalizeData(parseCSV(csv));
+  initDashboard();
+}
+
+/* ═══ Dashboard Init ═══ */
+function initDashboard() {
+  document.getElementById('uploadCard').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+
+  populateTownFilter();
+  renderSummary();
+  initMap();
+  applyFilters();
+}
+
+function resetData() {
+  allData = []; filtered = []; currentPage = 1;
+  document.getElementById('uploadCard').classList.remove('hidden');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('uploadError').textContent = '';
+  document.getElementById('fileInput').value = '';
+  if (map) { map.remove(); map = null; }
+  markers = [];
+}
+
+/* ═══ Summary ═══ */
+function renderSummary() {
+  const total = allData.length;
+  const totalTxns = allData.reduce((s, d) => s + d.txns, 0);
+  const avgPrice = allData.reduce((s, d) => s + d.avgPrice, 0) / total;
+  const hdbCount = allData.filter(d => d.type === 'HDB').length;
+  const pvtCount = total - hdbCount;
+  const topTown = Object.entries(allData.reduce((m, d) => { m[d.town] = (m[d.town]||0) + d.txns; return m; }, {}))
+    .sort((a, b) => b[1] - a[1])[0];
+
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="sum-card"><div class="sum-val">${total}</div><div class="sum-label">房产项目 Properties</div></div>
+    <div class="sum-card"><div class="sum-val">${fmt(totalTxns)}</div><div class="sum-label">总交易量 Transactions</div></div>
+    <div class="sum-card"><div class="sum-val">${fmtPrice(avgPrice)}</div><div class="sum-label">平均成交价 Avg Price</div></div>
+    <div class="sum-card"><div class="sum-val">${hdbCount} / ${pvtCount}</div><div class="sum-label">HDB / Private</div></div>
+    <div class="sum-card"><div class="sum-val">${topTown ? topTown[0] : '—'}</div><div class="sum-label">最热区域 Top Town</div></div>`;
+}
+
+/* ═══ Map ═══ */
+function initMap() {
+  if (map) { map.remove(); markers = []; }
+  map = L.map('map').setView([1.3521, 103.8198], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+  }).addTo(map);
+  renderMapMarkers(allData);
+}
+
+function renderMapMarkers(data) {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  const maxTxn = Math.max(...data.map(d => d.txns), 1);
+
+  data.forEach(d => {
+    if (!d.lat || !d.lng) return;
+    const size = Math.max(10, Math.min(28, 10 + (d.txns / maxTxn) * 18));
+    const color = d.type === 'HDB' ? 'var(--hdb)' : 'var(--pvt)';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${d.type==='HDB'?'#3b82f6':'#8b5cf6'};opacity:.8;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;">${d.txns}</div>`,
+      iconSize: [size, size], iconAnchor: [size/2, size/2]
+    });
+    const m = L.marker([d.lat, d.lng], { icon })
+      .addTo(map)
+      .bindPopup(`<b>${d.name}</b><br>${d.type} · ${d.town}<br>交易 ${d.txns} 笔 · 均价 ${fmtPrice(d.avgPrice)}`);
+    m.on('click', () => showDetail(allData.indexOf(d)));
+    markers.push(m);
+  });
+
+  if (data.length > 0) {
+    const bounds = L.latLngBounds(data.filter(d => d.lat && d.lng).map(d => [d.lat, d.lng]));
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [30, 30] });
+  }
+}
+
+/* ═══ Filters & Sort ═══ */
+function populateTownFilter() {
+  const towns = [...new Set(allData.map(d => d.town))].sort();
+  const sel = document.getElementById('fTown');
+  sel.innerHTML = '<option value="all">所有区域 All Towns</option>' + towns.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+function applyFilters() {
+  const type = document.getElementById('fType').value;
+  const town = document.getElementById('fTown').value;
+  const sort = document.getElementById('fSort').value;
+  const search = document.getElementById('fSearch').value.toLowerCase();
+
+  filtered = allData.filter(d => {
+    if (type !== 'all' && d.type !== type) return false;
+    if (town !== 'all' && d.town !== town) return false;
+    if (search && !d.name.toLowerCase().includes(search) && !d.addr.toLowerCase().includes(search) && !d.town.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const sorters = {
+    rank: (a, b) => a.rank - b.rank,
+    txn_desc: (a, b) => b.txns - a.txns,
+    price_desc: (a, b) => b.avgPrice - a.avgPrice,
+    price_asc: (a, b) => a.avgPrice - b.avgPrice,
+    psm_desc: (a, b) => b.avgPsm - a.avgPsm
+  };
+  filtered.sort(sorters[sort] || sorters.rank);
+
+  document.getElementById('filterCount').textContent = `${filtered.length} / ${allData.length} 项`;
+  currentPage = 1;
+  renderTable();
+  renderMapMarkers(filtered);
+}
+
+/* ═══ Table ═══ */
+function renderTable() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filtered.slice(start, start + PAGE_SIZE);
+  const maxTxn = Math.max(...allData.map(d => d.txns), 1);
+
+  document.getElementById('tableBody').innerHTML = page.map(d => {
+    const barW = Math.round((d.txns / maxTxn) * 60);
+    const typeClass = d.type === 'HDB' ? 'type-hdb' : 'type-pvt';
+    const idx = allData.indexOf(d);
+    return `<tr>
+      <td style="font-weight:600;color:var(--text-tri)">${d.rank}</td>
+      <td><b>${d.name}</b><br><span style="font-size:11px;color:var(--text-tri)">${d.addr}</span></td>
+      <td><span class="type-badge ${typeClass}">${d.type}</span></td>
+      <td>${d.town}</td>
+      <td><b>${d.txns}</b><span class="txn-bar" style="width:${barW}px"></span></td>
+      <td>${fmtPrice(d.avgPrice)}</td>
+      <td>$${fmt(Math.round(d.avgPsm))}/m²</td>
+      <td style="font-size:11px">${d.domType}</td>
+      <td><button class="detail-btn" onclick="showDetail(${idx})">详情</button></td>
+    </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (totalPages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+  document.getElementById('pagination').innerHTML = `
+    <button ${currentPage <= 1 ? 'disabled' : ''} onclick="currentPage--;renderTable()">← 上一页</button>
+    <span class="page-info">${currentPage} / ${totalPages}</span>
+    <button ${currentPage >= totalPages ? 'disabled' : ''} onclick="currentPage++;renderTable()">下一页 →</button>`;
+}
+
+/* ═══ Detail Modal ═══ */
+function showDetail(idx) {
+  const d = allData[idx];
+  if (!d) return;
+
+  const mrtNames = d.mrt.split(';').map(s => s.trim()).filter(Boolean);
+  const mrtDists = d.mrtDist.split(';').map(s => s.trim()).filter(Boolean);
+  const mrtHtml = mrtNames.map((name, i) =>
+    `<div class="mrt-item"><span>🚇 ${name}</span><span class="mrt-dist">${mrtDists[i] || '—'}</span></div>`
+  ).join('');
+
+  const schoolEntries = d.schools.split(';').map(s => s.trim()).filter(Boolean);
+  const schoolHtml = schoolEntries.map(entry => {
+    const match = entry.match(/^(.+?)\s*\(([^)]+)\)$/);
+    const name = match ? match[1].trim() : entry;
+    const dist = match ? match[2] : '';
+    return `<div class="school-item"><span>🏫 ${name}</span>${dist ? `<span class="school-dist">${dist}</span>` : ''}</div>`;
+  }).join('');
+
+  const priceRange = d.maxPrice - d.minPrice;
+  const priceFill = priceRange > 0 ? 100 : 0;
+
+  document.getElementById('modalContent').innerHTML = `
+    <h2>${d.name}</h2>
+    <div class="m-sub">
+      <span class="type-badge ${d.type==='HDB'?'type-hdb':'type-pvt'}">${d.type}</span>
+      &nbsp;${d.town} · ${d.addr}
+    </div>
+    <div class="m-grid">
+      <div class="m-item"><div class="m-val">${d.txns} 笔</div><div class="m-lbl">近6月交易量</div></div>
+      <div class="m-item"><div class="m-val">${fmtPrice(d.avgPrice)}</div><div class="m-lbl">平均成交价</div></div>
+      <div class="m-item"><div class="m-val">${d.avgArea.toFixed(1)} m²</div><div class="m-lbl">平均面积</div></div>
+      <div class="m-item"><div class="m-val">$${fmt(Math.round(d.avgPsm))}/m²</div><div class="m-lbl">平均单价</div></div>
+      <div class="m-item"><div class="m-val">${d.domType || '—'}</div><div class="m-lbl">主要户型</div></div>
+      <div class="m-item"><div class="m-val">#${d.rank}</div><div class="m-lbl">交易量排名</div></div>
+    </div>
+
+    <div class="m-section">💰 价格区间 Price Range</div>
+    <div class="price-range-labels"><span>${fmtPrice(d.minPrice)}</span><span>${fmtPrice(d.avgPrice)}</span><span>${fmtPrice(d.maxPrice)}</span></div>
+    <div class="price-range-bar"><div class="price-range-fill" style="width:${priceFill}%"></div></div>
+
+    ${mrtNames.length ? `<div class="m-section">🚇 最近MRT/LRT Nearest MRT (${mrtNames.length})</div><div class="mrt-list">${mrtHtml}</div>` : ''}
+
+    ${schoolEntries.length ? `<div class="m-section">🏫 附近学校 Nearby Schools (${d.schoolCount})</div><div class="school-list">${schoolHtml}</div>` : ''}
+  `;
+
+  document.getElementById('modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ═══ Helpers ═══ */
+function fmt(n) { return n.toLocaleString('en-US'); }
+function fmtPrice(n) {
+  if (!n || isNaN(n)) return '—';
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+  return '$' + Math.round(n);
+}
+</script>
+</body>
+</html>
