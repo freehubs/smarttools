@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新加坡名校学区房 | SG School & Property Explorer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --accent: #dc2626;
+    --accent-light: #f87171;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --condo: #8b5cf6;
+    --hdb: #0ea5e9;
+    --ec: #d946ef;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 50%, #fce7f3 100%);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .container { max-width: 1060px; margin: 0 auto; padding: 32px 20px 64px; }
+
+  header { text-align: center; margin-bottom: 24px; }
+  header h1 { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  header p { color: var(--text-secondary); font-size: 13px; max-width: 600px; margin: 0 auto; }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 15px; font-weight: 600; color: var(--text);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+
+  .card-title .icon {
+    width: 26px; height: 26px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+
+  /* Map */
+  #map { height: 420px; border-radius: var(--radius); border: 1px solid var(--border); z-index: 1; }
+
+  /* Filters */
+  .filter-bar {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
+    align-items: center;
+  }
+  .filter-bar select, .filter-bar input {
+    padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 13px; background: var(--surface); color: var(--text);
+    outline: none; cursor: pointer;
+  }
+  .filter-bar select:focus, .filter-bar input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+  }
+  .filter-bar .filter-label {
+    font-size: 12px; color: var(--text-secondary); font-weight: 500;
+  }
+  .filter-count {
+    margin-left: auto; font-size: 12px; color: var(--text-tertiary);
+  }
+
+  /* School Grid */
+  .school-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+  }
+
+  .school-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: transform .15s, border-color .2s, box-shadow .2s;
+    position: relative;
+  }
+  .school-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--accent-light); }
+  .school-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(220,38,38,.12); }
+
+  .school-card .rank-badge {
+    position: absolute; top: -8px; left: 16px;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+  }
+  .rank-gold { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  .rank-silver { background: linear-gradient(135deg, #94a3b8, #64748b); }
+  .rank-bronze { background: linear-gradient(135deg, #d97706, #92400e); }
+
+  .school-card .s-name { font-size: 15px; font-weight: 600; margin-left: 22px; }
+  .school-card .s-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .school-card .s-tag {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px;
+    font-weight: 600; line-height: 1.5;
+  }
+  .tag-region { background: #f1f5f9; color: var(--text-secondary); }
+  .tag-sap { background: #fef3c7; color: #92400e; }
+  .tag-gep { background: #dbeafe; color: #1e40af; }
+  .tag-girls { background: #fce7f3; color: #9d174d; }
+  .tag-boys { background: #dbeafe; color: #1e40af; }
+  .tag-aided { background: #ecfdf5; color: #065f46; }
+
+  .school-card .s-stats {
+    display: flex; gap: 16px; margin-top: 10px; font-size: 12px;
+  }
+  .school-card .s-stat { display: flex; flex-direction: column; }
+  .school-card .s-stat .s-val { font-weight: 700; font-size: 16px; color: var(--accent); }
+  .school-card .s-stat .s-label { color: var(--text-tertiary); font-size: 10px; }
+
+  .school-card .s-addr {
+    font-size: 11px; color: var(--text-tertiary); margin-top: 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Property Panel */
+  .prop-panel { display: none; animation: fadeUp .3s ease; }
+  .prop-panel.show { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .prop-panel .school-detail {
+    display: flex; gap: 16px; flex-wrap: wrap; padding: 16px;
+    background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+    border-radius: 10px; margin-bottom: 16px; border: 1px solid #fecaca;
+  }
+  .prop-panel .school-detail .sd-item { flex: 1; min-width: 120px; text-align: center; }
+  .prop-panel .school-detail .sd-val { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .prop-panel .school-detail .sd-label { font-size: 11px; color: var(--text-secondary); }
+
+  .prop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .prop-card {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color .2s;
+  }
+  .prop-card:hover { border-color: var(--primary); }
+
+  .prop-card .p-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .prop-card .p-type {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    font-weight: 700; color: #fff;
+  }
+  .p-type-condo { background: var(--condo); }
+  .p-type-hdb { background: var(--hdb); }
+  .p-type-ec { background: var(--ec); }
+
+  .prop-card .p-name { font-size: 14px; font-weight: 600; flex: 1; }
+  .prop-card .p-details { font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+  .prop-card .p-details span { color: var(--text); font-weight: 600; }
+
+  .prop-card .p-price-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+  }
+  .prop-card .p-price { font-size: 15px; font-weight: 700; color: var(--primary-dark); }
+  .prop-card .p-psf { font-size: 11px; color: var(--text-secondary); }
+  .prop-card .p-dist {
+    font-size: 10px; color: var(--success); font-weight: 600;
+    background: #ecfdf5; padding: 2px 8px; border-radius: 20px;
+  }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text-secondary); font-size: 13px;
+    cursor: pointer; font-family: inherit; margin-bottom: 16px;
+    transition: background .15s;
+  }
+  .back-btn:hover { background: var(--surface-alt); }
+
+  footer {
+    text-align: center; margin-top: 36px; font-size: 12px;
+    color: var(--text-secondary); line-height: 1.8;
+  }
+
+  @media (max-width: 640px) {
+    .school-grid { grid-template-columns: 1fr; }
+    .prop-grid { grid-template-columns: 1fr; }
+    #map { height: 300px; }
+    .school-detail { flex-direction: column; }
+  }
+
+  .leaflet-popup-content { font-family: inherit; font-size: 13px; line-height: 1.5; }
+  .leaflet-popup-content b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:1000;backdrop-filter:blur(10px);">
+  <div style="max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:12px;">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none;">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:0.9rem;color:var(--text-secondary);text-decoration:none;">&larr; All Tools</a>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>🇸🇬 新加坡名校学区房</h1>
+    <p>SG Top 20 Primary Schools & Nearby Properties — 基于 2024 P1 Phase 2C 报名数据排名 · 展示 1 公里内热门楼盘</p>
+  </header>
+
+  <div class="card">
+    <div class="card-title">
+      <span class="icon" style="background:#fef2f2;color:var(--accent)">🗺️</span>
+      学校地图 School Map
+      <span style="font-size:11px;color:var(--text-tertiary);margin-left:auto;">点击标记查看详情</span>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">筛选 Filter:</span>
+    <select id="filterRegion" onchange="renderSchools()">
+      <option value="all">所有区域 All Regions</option>
+      <option value="west">西部 West</option>
+      <option value="north">北部/东北 North/NE</option>
+      <option value="east">东部 East</option>
+      <option value="central">中部 Central</option>
+    </select>
+    <select id="filterPropType" onchange="renderProperties()">
+      <option value="all">所有房产 All Types</option>
+      <option value="Condo">公寓 Condo</option>
+      <option value="HDB">组屋 HDB</option>
+      <option value="EC">执行共管 EC</option>
+    </select>
+    <span class="filter-count" id="filterCount"></span>
+  </div>
+
+  <div id="schoolList">
+    <div class="school-grid" id="schoolGrid"></div>
+  </div>
+
+  <div class="prop-panel" id="propPanel">
+    <button class="back-btn" onclick="showSchoolList()">← 返回学校列表 Back to Schools</button>
+    <div id="propContent"></div>
+  </div>
+</div>
+
+<footer>
+  数据来源：MOE P1 Registration 2024 Phase 2C · launches.sg · SRX · PropertyGuru · home123.sg · 房产数据为参考值，请以实际交易为准<br>
+  SmartTools — <a href="../index.html" style="color:var(--accent)">Home</a>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA: 20 Schools + Properties
+   ═══════════════════════════════════════════════════════════════ */
+
+const SCHOOLS = [
+  {
+    rank:1, name:"Princess Elizabeth Primary", nameZh:"伊丽莎白公主小学",
+    addr:"30 Bukit Batok West Ave 3, S659163", town:"Bukit Batok", region:"west",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:6.59, applicants:270, vacancies:41,
+    lat:1.3489, lng:103.7498,
+    note:"连续 3 年最热门 · 周边大量 BTO 新项目",
+    properties:[
+      {name:"Le Quest",type:"Condo",tenure:"99-yr",top:2021,avgPsf:1350,price:"$850K–1.6M",units:516,txns:42,dist:"0.6km",lat:1.3465,lng:103.7462},
+      {name:"Midview City",type:"Condo",tenure:"60-yr",top:2014,avgPsf:980,price:"$680K–1.2M",units:451,txns:18,dist:"0.8km",lat:1.3508,lng:103.7465},
+      {name:"Hillview Regency",type:"Condo",tenure:"99-yr",top:2001,avgPsf:1050,price:"$850K–1.4M",units:572,txns:22,dist:"0.9km",lat:1.3530,lng:103.7520},
+      {name:"Blk 148 Bt Batok West Ave 6",type:"HDB",tenure:"99-yr",top:1986,avgPsf:520,price:"$380K–480K",units:0,txns:8,dist:"0.3km",lat:1.3478,lng:103.7488},
+      {name:"Blk 202 Bt Batok St 21",type:"HDB",tenure:"99-yr",top:1988,avgPsf:540,price:"$400K–520K",units:0,txns:12,dist:"0.4km",lat:1.3501,lng:103.7510},
+      {name:"Blk 298 Bt Batok St 22",type:"HDB",tenure:"99-yr",top:1990,avgPsf:530,price:"$390K–500K",units:0,txns:10,dist:"0.5km",lat:1.3475,lng:103.7525},
+      {name:"Guilin View",type:"Condo",tenure:"99-yr",top:2003,avgPsf:920,price:"$650K–980K",units:360,txns:8,dist:"0.7km",lat:1.3460,lng:103.7520},
+      {name:"Otto Place EC",type:"EC",tenure:"99-yr",top:2028,avgPsf:1450,price:"$1.1M–1.7M",units:530,txns:0,dist:"0.9km",lat:1.3445,lng:103.7470}
+    ]
+  },
+  {
+    rank:2, name:"Nan Hua Primary", nameZh:"南华小学",
+    addr:"30 Jalan Lempeng, S128806", town:"Clementi", region:"west",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
+    ratio:4.00, applicants:160, vacancies:40,
+    lat:1.3106, lng:103.7654,
+    note:"SAP 名校 · 西部最受欢迎 · 儒家教育传统",
+    properties:[
+      {name:"Elta",type:"Condo",tenure:"99-yr",top:2028,avgPsf:2300,price:"$1.3M–2.5M",units:501,txns:0,dist:"0.5km",lat:1.3130,lng:103.7630},
+      {name:"Parc Clematis",type:"Condo",tenure:"99-yr",top:2024,avgPsf:1650,price:"$1.0M–2.8M",units:1468,txns:85,dist:"0.7km",lat:1.3085,lng:103.7620},
+      {name:"Whistler Grand",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1700,price:"$900K–2.0M",units:716,txns:48,dist:"0.8km",lat:1.3060,lng:103.7680},
+      {name:"Clement Canopy",type:"Condo",tenure:"99-yr",top:2020,avgPsf:1580,price:"$1.1M–2.2M",units:505,txns:35,dist:"0.6km",lat:1.3095,lng:103.7690},
+      {name:"Blk 312 Clementi Ave 4",type:"HDB",tenure:"99-yr",top:1983,avgPsf:600,price:"$450K–580K",units:0,txns:10,dist:"0.3km",lat:1.3115,lng:103.7645},
+      {name:"Blk 352 Clementi Ave 2",type:"HDB",tenure:"99-yr",top:1985,avgPsf:620,price:"$480K–620K",units:0,txns:14,dist:"0.5km",lat:1.3090,lng:103.7670},
+      {name:"Nava Grove",type:"Condo",tenure:"99-yr",top:2028,avgPsf:2100,price:"$1.3M–2.6M",units:552,txns:0,dist:"0.9km",lat:1.3140,lng:103.7700},
+      {name:"The Trilinq",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1450,price:"$980K–1.8M",units:755,txns:30,dist:"0.7km",lat:1.3075,lng:103.7605}
+    ]
+  },
+  {
+    rank:3, name:"Chongfu School", nameZh:"崇福学校",
+    addr:"31 Yishun St 22, S768577", town:"Yishun", region:"north",
+    type:"Govt-aided", gender:"Mixed", sap:false, gep:false,
+    ratio:3.56, applicants:153, vacancies:43,
+    lat:1.4286, lng:103.8328,
+    note:"热度急升 · 福建会馆属校 · 北部明星学校",
+    properties:[
+      {name:"North Gaia EC",type:"EC",tenure:"99-yr",top:2025,avgPsf:1200,price:"$1.1M–2.0M",units:616,txns:616,dist:"0.4km",lat:1.4310,lng:103.8340},
+      {name:"The Criterion EC",type:"EC",tenure:"99-yr",top:2019,avgPsf:1050,price:"$950K–1.4M",units:505,txns:28,dist:"0.7km",lat:1.4260,lng:103.8360},
+      {name:"Symphony Suites",type:"Condo",tenure:"99-yr",top:2018,avgPsf:1080,price:"$780K–1.3M",units:660,txns:22,dist:"0.8km",lat:1.4250,lng:103.8310},
+      {name:"Blk 223 Yishun St 21",type:"HDB",tenure:"99-yr",top:1990,avgPsf:450,price:"$350K–430K",units:0,txns:8,dist:"0.3km",lat:1.4295,lng:103.8315},
+      {name:"Blk 334 Yishun Ring Rd",type:"HDB",tenure:"99-yr",top:1992,avgPsf:460,price:"$360K–450K",units:0,txns:12,dist:"0.5km",lat:1.4275,lng:103.8345},
+      {name:"Yishun Sapphire",type:"Condo",tenure:"99-yr",top:2008,avgPsf:850,price:"$580K–880K",units:298,txns:10,dist:"0.9km",lat:1.4305,lng:103.8295}
+    ]
+  },
+  {
+    rank:4, name:"Rosyth School", nameZh:"乐赛学校",
+    addr:"21 Serangoon North Ave 4, S555855", town:"Serangoon", region:"central",
+    type:"Govt-aided", gender:"Mixed", sap:false, gep:false,
+    ratio:3.16, applicants:139, vacancies:44,
+    lat:1.3630, lng:103.8719,
+    note:"传统名校 · 东北部最受欢迎之一",
+    properties:[
+      {name:"Affinity at Serangoon",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1550,price:"$1.0M–2.0M",units:1052,txns:62,dist:"0.6km",lat:1.3645,lng:103.8740},
+      {name:"The Garden Residences",type:"Condo",tenure:"99-yr",top:2022,avgPsf:1600,price:"$1.1M–2.1M",units:613,txns:38,dist:"0.7km",lat:1.3660,lng:103.8700},
+      {name:"Kensington Square",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1400,price:"$600K–1.0M",units:674,txns:25,dist:"0.8km",lat:1.3615,lng:103.8750},
+      {name:"Blk 147 Serangoon North Ave 1",type:"HDB",tenure:"99-yr",top:1984,avgPsf:520,price:"$380K–500K",units:0,txns:9,dist:"0.4km",lat:1.3640,lng:103.8705},
+      {name:"Blk 157 Serangoon North Ave 1",type:"HDB",tenure:"99-yr",top:1986,avgPsf:530,price:"$390K–510K",units:0,txns:11,dist:"0.5km",lat:1.3625,lng:103.8710},
+      {name:"Nin Residence",type:"Condo",tenure:"99-yr",top:2014,avgPsf:1250,price:"$850K–1.4M",units:219,txns:12,dist:"0.5km",lat:1.3650,lng:103.8695}
+    ]
+  },
+  {
+    rank:5, name:"St. Hilda's Primary", nameZh:"圣希尔达小学",
+    addr:"2 Tampines Ave 3, S529706", town:"Tampines", region:"east",
+    type:"Govt-aided", gender:"Mixed", sap:false, gep:true,
+    ratio:3.15, applicants:129, vacancies:41,
+    lat:1.3536, lng:103.9442,
+    note:"GEP 学校 · 淡滨尼区学术标杆",
+    properties:[
+      {name:"Parktown Residence",type:"Condo",tenure:"99-yr",top:2028,avgPsf:1950,price:"$1.2M–2.4M",units:1193,txns:0,dist:"0.7km",lat:1.3560,lng:103.9480},
+      {name:"Aurelle of Tampines EC",type:"EC",tenure:"99-yr",top:2028,avgPsf:1500,price:"$1.1M–1.7M",units:760,txns:0,dist:"0.8km",lat:1.3575,lng:103.9460},
+      {name:"Tampines GreenCourt",type:"Condo",tenure:"99-yr",top:2003,avgPsf:1050,price:"$750K–1.2M",units:504,txns:20,dist:"0.5km",lat:1.3520,lng:103.9430},
+      {name:"The Tapestry",type:"Condo",tenure:"99-yr",top:2022,avgPsf:1380,price:"$900K–1.6M",units:861,txns:45,dist:"0.6km",lat:1.3510,lng:103.9465},
+      {name:"Blk 497 Tampines Ave 9",type:"HDB",tenure:"99-yr",top:1993,avgPsf:500,price:"$420K–550K",units:0,txns:10,dist:"0.3km",lat:1.3545,lng:103.9435},
+      {name:"Blk 871 Tampines St 84",type:"HDB",tenure:"99-yr",top:1996,avgPsf:510,price:"$430K–560K",units:0,txns:14,dist:"0.6km",lat:1.3555,lng:103.9455},
+      {name:"Q Bay Residences",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1200,price:"$800K–1.3M",units:630,txns:18,dist:"0.9km",lat:1.3500,lng:103.9420}
+    ]
+  },
+  {
+    rank:6, name:"South View Primary", nameZh:"南景小学",
+    addr:"6 Choa Chu Kang Central, S689762", town:"Choa Chu Kang", region:"west",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.95, applicants:127, vacancies:43,
+    lat:1.3852, lng:103.7447,
+    note:"蔡厝港中心位置 · 交通便利",
+    properties:[
+      {name:"iNz Residence EC",type:"EC",tenure:"99-yr",top:2021,avgPsf:1100,price:"$850K–1.3M",units:497,txns:20,dist:"0.7km",lat:1.3870,lng:103.7430},
+      {name:"Kingsford Waterbay",type:"Condo",tenure:"99-yr",top:2019,avgPsf:1050,price:"$700K–1.2M",units:1165,txns:35,dist:"0.8km",lat:1.3835,lng:103.7465},
+      {name:"Blk 302 Choa Chu Kang Ave 4",type:"HDB",tenure:"99-yr",top:1992,avgPsf:470,price:"$360K–460K",units:0,txns:9,dist:"0.3km",lat:1.3860,lng:103.7440},
+      {name:"Blk 446 Choa Chu Kang Ave 4",type:"HDB",tenure:"99-yr",top:1995,avgPsf:480,price:"$380K–480K",units:0,txns:11,dist:"0.5km",lat:1.3845,lng:103.7460},
+      {name:"Yew Mei Green",type:"Condo",tenure:"99-yr",top:2001,avgPsf:880,price:"$600K–950K",units:520,txns:15,dist:"0.6km",lat:1.3840,lng:103.7420}
+    ]
+  },
+  {
+    rank:7, name:"Nan Chiau Primary", nameZh:"南侨小学",
+    addr:"50 Anchorvale Rd, S544851", town:"Sengkang", region:"north",
+    type:"Govt-aided", gender:"Mixed", sap:false, gep:false,
+    ratio:2.81, applicants:247, vacancies:88,
+    lat:1.3909, lng:103.8917,
+    note:"福建会馆属校 · 盛港核心 · 最多申请人数",
+    properties:[
+      {name:"The Vales EC",type:"EC",tenure:"99-yr",top:2018,avgPsf:1000,price:"$850K–1.3M",units:517,txns:25,dist:"0.5km",lat:1.3925,lng:103.8930},
+      {name:"Rivercove Residences EC",type:"EC",tenure:"99-yr",top:2021,avgPsf:1050,price:"$900K–1.4M",units:628,txns:30,dist:"0.7km",lat:1.3890,lng:103.8940},
+      {name:"Blk 338 Anchorvale Cres",type:"HDB",tenure:"99-yr",top:2015,avgPsf:520,price:"$450K–580K",units:0,txns:16,dist:"0.3km",lat:1.3915,lng:103.8910},
+      {name:"Blk 355 Anchorvale Rd",type:"HDB",tenure:"99-yr",top:2016,avgPsf:530,price:"$460K–590K",units:0,txns:18,dist:"0.4km",lat:1.3920,lng:103.8925},
+      {name:"High Park Residences",type:"Condo",tenure:"99-yr",top:2019,avgPsf:1100,price:"$680K–1.3M",units:1390,txns:55,dist:"0.8km",lat:1.3895,lng:103.8895}
+    ]
+  },
+  {
+    rank:8, name:"Rulang Primary", nameZh:"儒林小学",
+    addr:"6 Jurong West St 52, S649295", town:"Jurong West", region:"west",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.80, applicants:115, vacancies:41,
+    lat:1.3401, lng:103.6988,
+    note:"裕廊西区热门学校 · 社区口碑佳",
+    properties:[
+      {name:"Sora",type:"Condo",tenure:"99-yr",top:2027,avgPsf:1800,price:"$1.0M–2.0M",units:440,txns:0,dist:"0.8km",lat:1.3380,lng:103.6960},
+      {name:"Lake Grande",type:"Condo",tenure:"99-yr",top:2021,avgPsf:1450,price:"$900K–1.8M",units:710,txns:32,dist:"0.7km",lat:1.3415,lng:103.7005},
+      {name:"J Gateway",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1350,price:"$750K–1.5M",units:738,txns:28,dist:"0.9km",lat:1.3395,lng:103.7020},
+      {name:"Blk 523 Jurong West St 52",type:"HDB",tenure:"99-yr",top:1994,avgPsf:440,price:"$340K–430K",units:0,txns:8,dist:"0.2km",lat:1.3405,lng:103.6995},
+      {name:"Blk 539 Jurong West Ave 1",type:"HDB",tenure:"99-yr",top:1995,avgPsf:450,price:"$350K–440K",units:0,txns:10,dist:"0.4km",lat:1.3390,lng:103.6975}
+    ]
+  },
+  {
+    rank:9, name:"Northland Primary", nameZh:"北地小学",
+    addr:"30 Yishun Ring Rd, S768007", town:"Yishun", region:"north",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.74, applicants:170, vacancies:62,
+    lat:1.4245, lng:103.8380,
+    note:"义顺成熟社区 · 高申请量",
+    properties:[
+      {name:"North Gaia EC",type:"EC",tenure:"99-yr",top:2025,avgPsf:1200,price:"$1.1M–2.0M",units:616,txns:616,dist:"0.6km",lat:1.4310,lng:103.8340},
+      {name:"The Wisteria",type:"Condo",tenure:"99-yr",top:2017,avgPsf:950,price:"$680K–1.1M",units:144,txns:10,dist:"0.7km",lat:1.4235,lng:103.8365},
+      {name:"Blk 101 Yishun Ring Rd",type:"HDB",tenure:"99-yr",top:1985,avgPsf:430,price:"$320K–400K",units:0,txns:7,dist:"0.3km",lat:1.4250,lng:103.8375},
+      {name:"Blk 123 Yishun St 11",type:"HDB",tenure:"99-yr",top:1987,avgPsf:440,price:"$330K–420K",units:0,txns:10,dist:"0.5km",lat:1.4260,lng:103.8395},
+      {name:"Nine Residences",type:"Condo",tenure:"FH",top:2016,avgPsf:900,price:"$520K–880K",units:34,txns:5,dist:"0.8km",lat:1.4230,lng:103.8360}
+    ]
+  },
+  {
+    rank:10, name:"Angsana Primary", nameZh:"安桑纳小学",
+    addr:"1 Tampines St 22, S529360", town:"Tampines", region:"east",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.58, applicants:155, vacancies:60,
+    lat:1.3540, lng:103.9550,
+    note:"排名飙升 92 位 · 东部新星",
+    properties:[
+      {name:"The Alps Residences",type:"Condo",tenure:"99-yr",top:2019,avgPsf:1250,price:"$850K–1.5M",units:626,txns:30,dist:"0.5km",lat:1.3555,lng:103.9565},
+      {name:"Tampines GreenRidges",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1180,price:"$780K–1.3M",units:396,txns:18,dist:"0.7km",lat:1.3525,lng:103.9540},
+      {name:"Blk 267 Tampines St 21",type:"HDB",tenure:"99-yr",top:1990,avgPsf:480,price:"$370K–470K",units:0,txns:9,dist:"0.3km",lat:1.3545,lng:103.9545},
+      {name:"Blk 270 Tampines St 21",type:"HDB",tenure:"99-yr",top:1990,avgPsf:490,price:"$380K–480K",units:0,txns:11,dist:"0.4km",lat:1.3535,lng:103.9555},
+      {name:"A Treasure Trove",type:"Condo",tenure:"99-yr",top:2014,avgPsf:1150,price:"$800K–1.4M",units:882,txns:35,dist:"0.8km",lat:1.3560,lng:103.9530}
+    ]
+  },
+  {
+    rank:11, name:"Wellington Primary", nameZh:"惠灵顿小学",
+    addr:"10 Wellington Circle, S757719", town:"Sembawang", region:"north",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.53, applicants:114, vacancies:45,
+    lat:1.4495, lng:103.8240,
+    note:"三巴旺社区学校 · 稳定增长",
+    properties:[
+      {name:"The Visionaire EC",type:"EC",tenure:"99-yr",top:2019,avgPsf:950,price:"$750K–1.1M",units:632,txns:25,dist:"0.6km",lat:1.4480,lng:103.8255},
+      {name:"Canberra Residences",type:"Condo",tenure:"99-yr",top:2016,avgPsf:880,price:"$650K–1.0M",units:320,txns:15,dist:"0.8km",lat:1.4510,lng:103.8260},
+      {name:"Blk 580 Canberra Link",type:"HDB",tenure:"99-yr",top:2020,avgPsf:520,price:"$450K–570K",units:0,txns:12,dist:"0.4km",lat:1.4500,lng:103.8245},
+      {name:"Blk 401 Sembawang Dr",type:"HDB",tenure:"99-yr",top:2000,avgPsf:430,price:"$330K–420K",units:0,txns:8,dist:"0.5km",lat:1.4488,lng:103.8230}
+    ]
+  },
+  {
+    rank:12, name:"Poi Ching School", nameZh:"培青学校",
+    addr:"21 Tampines St 71, S529067", town:"Tampines", region:"east",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
+    ratio:2.43, applicants:192, vacancies:79,
+    lat:1.3454, lng:103.9527,
+    note:"SAP 学校 · 淡滨尼南部 · 高申请量",
+    properties:[
+      {name:"The Tampines Trilliant EC",type:"EC",tenure:"99-yr",top:2015,avgPsf:1000,price:"$800K–1.2M",units:590,txns:22,dist:"0.6km",lat:1.3470,lng:103.9540},
+      {name:"The Santorini",type:"Condo",tenure:"99-yr",top:2017,avgPsf:1100,price:"$720K–1.2M",units:597,txns:20,dist:"0.7km",lat:1.3440,lng:103.9510},
+      {name:"Blk 869 Tampines St 83",type:"HDB",tenure:"99-yr",top:1996,avgPsf:490,price:"$400K–510K",units:0,txns:10,dist:"0.3km",lat:1.3460,lng:103.9520},
+      {name:"Blk 723 Tampines St 72",type:"HDB",tenure:"99-yr",top:1993,avgPsf:480,price:"$390K–490K",units:0,txns:12,dist:"0.5km",lat:1.3445,lng:103.9535},
+      {name:"Waterview",type:"Condo",tenure:"99-yr",top:2014,avgPsf:1050,price:"$680K–1.1M",units:696,txns:25,dist:"0.8km",lat:1.3435,lng:103.9545}
+    ]
+  },
+  {
+    rank:13, name:"Gongshang Primary", nameZh:"公商小学",
+    addr:"1 Tampines St 42, S529174", town:"Tampines", region:"east",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.41, applicants:99, vacancies:41,
+    lat:1.3530, lng:103.9505,
+    note:"淡滨尼中心地带 · 便利交通",
+    properties:[
+      {name:"The Tapestry",type:"Condo",tenure:"99-yr",top:2022,avgPsf:1380,price:"$900K–1.6M",units:861,txns:45,dist:"0.5km",lat:1.3510,lng:103.9485},
+      {name:"Blk 497 Tampines Ave 9",type:"HDB",tenure:"99-yr",top:1993,avgPsf:500,price:"$420K–540K",units:0,txns:10,dist:"0.4km",lat:1.3540,lng:103.9510},
+      {name:"Blk 230 Tampines St 21",type:"HDB",tenure:"99-yr",top:1988,avgPsf:470,price:"$360K–460K",units:0,txns:8,dist:"0.5km",lat:1.3525,lng:103.9495},
+      {name:"Tampines GreenCourt",type:"Condo",tenure:"99-yr",top:2003,avgPsf:1050,price:"$750K–1.2M",units:504,txns:20,dist:"0.7km",lat:1.3520,lng:103.9520}
+    ]
+  },
+  {
+    rank:14, name:"Holy Innocents' Primary", nameZh:"圣婴小学",
+    addr:"5 Lorong Low Koon, S536449", town:"Hougang", region:"central",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
+    ratio:2.40, applicants:96, vacancies:40,
+    lat:1.3723, lng:103.8892,
+    note:"SAP 学校 · 后港区域",
+    properties:[
+      {name:"Riverfront Residences",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1350,price:"$850K–1.6M",units:1472,txns:55,dist:"0.7km",lat:1.3740,lng:103.8870},
+      {name:"The Florence Residences",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1400,price:"$900K–1.7M",units:1410,txns:60,dist:"0.8km",lat:1.3710,lng:103.8910},
+      {name:"Blk 650 Hougang Ave 8",type:"HDB",tenure:"99-yr",top:1998,avgPsf:480,price:"$380K–480K",units:0,txns:10,dist:"0.4km",lat:1.3730,lng:103.8900},
+      {name:"Blk 673 Hougang Ave 8",type:"HDB",tenure:"99-yr",top:1999,avgPsf:490,price:"$390K–500K",units:0,txns:12,dist:"0.5km",lat:1.3715,lng:103.8885}
+    ]
+  },
+  {
+    rank:15, name:"Bukit Panjang Primary", nameZh:"武吉班让小学",
+    addr:"5 Bukit Panjang Ring Rd, S679943", town:"Bukit Panjang", region:"west",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.37, applicants:102, vacancies:43,
+    lat:1.3813, lng:103.7630,
+    note:"武吉班让成熟区 · 近 Downtown Line",
+    properties:[
+      {name:"The Reserve Residences",type:"Condo",tenure:"99-yr",top:2028,avgPsf:2100,price:"$1.2M–2.5M",units:732,txns:0,dist:"0.9km",lat:1.3790,lng:103.7650},
+      {name:"Senja Residences EC",type:"EC",tenure:"99-yr",top:2015,avgPsf:900,price:"$750K–1.1M",units:602,txns:18,dist:"0.6km",lat:1.3825,lng:103.7615},
+      {name:"Blk 283 Bukit Panjang Ring Rd",type:"HDB",tenure:"99-yr",top:1993,avgPsf:470,price:"$350K–450K",units:0,txns:9,dist:"0.3km",lat:1.3818,lng:103.7625},
+      {name:"Blk 258 Bangkit Rd",type:"HDB",tenure:"99-yr",top:1990,avgPsf:460,price:"$340K–440K",units:0,txns:10,dist:"0.5km",lat:1.3800,lng:103.7640},
+      {name:"The Dairy Farm",type:"Condo",tenure:"99-yr",top:2024,avgPsf:1500,price:"$980K–1.6M",units:460,txns:22,dist:"0.8km",lat:1.3830,lng:103.7600}
+    ]
+  },
+  {
+    rank:16, name:"Ai Tong School", nameZh:"爱同学校",
+    addr:"100 Bright Hill Dr, S579646", town:"Bishan", region:"central",
+    type:"Govt-aided", gender:"Mixed", sap:true, gep:false,
+    ratio:2.29, applicants:94, vacancies:41,
+    lat:1.3605, lng:103.8357,
+    note:"SAP 名校 · 碧山核心 · 福建会馆属校",
+    properties:[
+      {name:"JadeScape",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1850,price:"$1.2M–2.8M",units:1206,txns:65,dist:"0.6km",lat:1.3585,lng:103.8380},
+      {name:"Sky Vue",type:"Condo",tenure:"99-yr",top:2016,avgPsf:1650,price:"$1.1M–2.2M",units:694,txns:30,dist:"0.7km",lat:1.3620,lng:103.8340},
+      {name:"Sky Habitat",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1700,price:"$1.2M–2.5M",units:509,txns:25,dist:"0.8km",lat:1.3590,lng:103.8370},
+      {name:"Blk 230 Bishan St 23",type:"HDB",tenure:"99-yr",top:1993,avgPsf:620,price:"$500K–660K",units:0,txns:12,dist:"0.4km",lat:1.3610,lng:103.8350},
+      {name:"Blk 283 Bishan St 22",type:"HDB",tenure:"99-yr",top:1995,avgPsf:630,price:"$510K–680K",units:0,txns:14,dist:"0.5km",lat:1.3600,lng:103.8365}
+    ]
+  },
+  {
+    rank:17, name:"Sengkang Green Primary", nameZh:"盛港绿小学",
+    addr:"15 Sengkang East Way, S541762", town:"Sengkang", region:"north",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.24, applicants:94, vacancies:42,
+    lat:1.3924, lng:103.8950,
+    note:"新兴热门 · 盛港东部 · 年轻家庭聚集",
+    properties:[
+      {name:"Parc Botannia",type:"Condo",tenure:"99-yr",top:2021,avgPsf:1150,price:"$780K–1.3M",units:735,txns:35,dist:"0.5km",lat:1.3940,lng:103.8965},
+      {name:"Blk 334C Sengkang East Way",type:"HDB",tenure:"99-yr",top:2018,avgPsf:530,price:"$450K–580K",units:0,txns:14,dist:"0.3km",lat:1.3930,lng:103.8945},
+      {name:"Blk 337A Anchorvale Cres",type:"HDB",tenure:"99-yr",top:2017,avgPsf:520,price:"$440K–570K",units:0,txns:16,dist:"0.4km",lat:1.3918,lng:103.8940},
+      {name:"Jewel @ Buangkok",type:"Condo",tenure:"99-yr",top:2015,avgPsf:1000,price:"$680K–1.1M",units:616,txns:22,dist:"0.8km",lat:1.3910,lng:103.8970}
+    ]
+  },
+  {
+    rank:18, name:"Frontier Primary", nameZh:"丰禾小学",
+    addr:"30 Jurong West St 61, S648370", town:"Jurong West", region:"west",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.07, applicants:89, vacancies:43,
+    lat:1.3415, lng:103.6872,
+    note:"裕廊西南端 · 靠近裕廊湖花园",
+    properties:[
+      {name:"Lakepoint Condo",type:"Condo",tenure:"99-yr",top:2001,avgPsf:850,price:"$550K–900K",units:350,txns:12,dist:"0.6km",lat:1.3400,lng:103.6860},
+      {name:"Blk 665 Jurong West St 64",type:"HDB",tenure:"99-yr",top:1997,avgPsf:420,price:"$320K–400K",units:0,txns:8,dist:"0.3km",lat:1.3420,lng:103.6880},
+      {name:"Blk 674 Jurong West St 65",type:"HDB",tenure:"99-yr",top:1998,avgPsf:430,price:"$330K–410K",units:0,txns:10,dist:"0.5km",lat:1.3410,lng:103.6890},
+      {name:"Lakeshore Condo",type:"Condo",tenure:"99-yr",top:2006,avgPsf:920,price:"$600K–1.0M",units:848,txns:28,dist:"0.9km",lat:1.3390,lng:103.6850}
+    ]
+  },
+  {
+    rank:19, name:"Xinmin Primary", nameZh:"新民小学",
+    addr:"15 Hougang St 21, S538947", town:"Hougang", region:"central",
+    type:"Government", gender:"Mixed", sap:false, gep:false,
+    ratio:2.07, applicants:93, vacancies:45,
+    lat:1.3690, lng:103.8855,
+    note:"后港社区学校 · 稳步上升",
+    properties:[
+      {name:"The Florence Residences",type:"Condo",tenure:"99-yr",top:2023,avgPsf:1400,price:"$900K–1.7M",units:1410,txns:60,dist:"0.6km",lat:1.3710,lng:103.8870},
+      {name:"The Minton",type:"Condo",tenure:"99-yr",top:2013,avgPsf:1200,price:"$800K–1.4M",units:1145,txns:40,dist:"0.7km",lat:1.3680,lng:103.8840},
+      {name:"Blk 448 Hougang Ave 10",type:"HDB",tenure:"99-yr",top:1995,avgPsf:470,price:"$370K–470K",units:0,txns:10,dist:"0.3km",lat:1.3695,lng:103.8850},
+      {name:"Blk 475 Hougang Ave 10",type:"HDB",tenure:"99-yr",top:1996,avgPsf:480,price:"$380K–480K",units:0,txns:12,dist:"0.5km",lat:1.3685,lng:103.8865}
+    ]
+  },
+  {
+    rank:20, name:"CHIJ Primary (Toa Payoh)", nameZh:"圣婴女校 (大巴窑)",
+    addr:"628 Lorong 1 Toa Payoh, S319765", town:"Toa Payoh", region:"central",
+    type:"Govt-aided", gender:"Girls", sap:false, gep:false,
+    ratio:2.02, applicants:83, vacancies:41,
+    lat:1.3365, lng:103.8485,
+    note:"女校 · 大巴窑核心 · 天主教传统",
+    properties:[
+      {name:"Gem Residences",type:"Condo",tenure:"99-yr",top:2020,avgPsf:1650,price:"$1.0M–2.0M",units:578,txns:30,dist:"0.5km",lat:1.3380,lng:103.8500},
+      {name:"Trevista",type:"Condo",tenure:"99-yr",top:2012,avgPsf:1500,price:"$950K–1.8M",units:590,txns:25,dist:"0.7km",lat:1.3350,lng:103.8470},
+      {name:"Blk 1 Lorong 7 Toa Payoh",type:"HDB",tenure:"99-yr",top:1980,avgPsf:560,price:"$400K–520K",units:0,txns:10,dist:"0.3km",lat:1.3370,lng:103.8480},
+      {name:"Blk 175 Lorong 1 Toa Payoh",type:"HDB",tenure:"99-yr",top:1985,avgPsf:570,price:"$420K–540K",units:0,txns:14,dist:"0.4km",lat:1.3360,lng:103.8490},
+      {name:"Oleander Towers",type:"Condo",tenure:"99-yr",top:2003,avgPsf:1300,price:"$800K–1.4M",units:218,txns:10,dist:"0.8km",lat:1.3345,lng:103.8505}
+    ]
+  }
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   MAP & UI
+   ═══════════════════════════════════════════════════════════════ */
+
+let map, schoolMarkers = [], propMarkers = [], circleLayer = null;
+let activeSchoolIdx = null;
+
+function initMap() {
+  map = L.map('map').setView([1.3521, 103.8198], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 18
+  }).addTo(map);
+
+  SCHOOLS.forEach((s, i) => {
+    const color = s.rank <= 5 ? '#d97706' : s.rank <= 10 ? '#64748b' : '#92400e';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:26px;height:26px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);">${s.rank}</div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    });
+    const m = L.marker([s.lat, s.lng], { icon })
+      .addTo(map)
+      .bindPopup(`<b>#${s.rank} ${s.name}</b><br>${s.nameZh}<br><small>${s.town} · 竞争比 ${s.ratio}</small>`);
+    m.on('click', () => showProperties(i));
+    schoolMarkers.push(m);
+  });
+}
+
+function showPropsOnMap(school) {
+  propMarkers.forEach(m => map.removeLayer(m));
+  propMarkers = [];
+  if (circleLayer) map.removeLayer(circleLayer);
+
+  circleLayer = L.circle([school.lat, school.lng], {
+    radius: 1000, color: '#dc2626', fillColor: '#dc2626',
+    fillOpacity: 0.06, weight: 2, dashArray: '6 4'
+  }).addTo(map);
+
+  const typeFilter = document.getElementById('filterPropType').value;
+  school.properties.forEach(p => {
+    if (typeFilter !== 'all' && p.type !== typeFilter) return;
+    const c = p.type === 'HDB' ? '#0ea5e9' : p.type === 'EC' ? '#d946ef' : '#8b5cf6';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:12px;height:12px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>`,
+      iconSize: [12, 12], iconAnchor: [6, 6]
+    });
+    const m = L.marker([p.lat, p.lng], { icon })
+      .addTo(map)
+      .bindPopup(`<b>${p.name}</b><br>${p.type} · ${p.tenure}<br>~${p.price} · ${p.dist}`);
+    propMarkers.push(m);
+  });
+
+  map.flyTo([school.lat, school.lng], 15, { duration: 0.8 });
+}
+
+/* ─── rendering ─── */
+
+function renderSchools() {
+  const region = document.getElementById('filterRegion').value;
+  const grid = document.getElementById('schoolGrid');
+  const filtered = SCHOOLS.filter(s => region === 'all' || s.region === region);
+
+  document.getElementById('filterCount').textContent = `${filtered.length} 所学校`;
+  document.getElementById('schoolList').style.display = '';
+  document.getElementById('propPanel').classList.remove('show');
+  activeSchoolIdx = null;
+
+  propMarkers.forEach(m => map.removeLayer(m));
+  propMarkers = [];
+  if (circleLayer) { map.removeLayer(circleLayer); circleLayer = null; }
+  map.flyTo([1.3521, 103.8198], 12, { duration: 0.5 });
+
+  grid.innerHTML = filtered.map((s, i) => {
+    const idx = SCHOOLS.indexOf(s);
+    const rankClass = s.rank <= 5 ? 'rank-gold' : s.rank <= 10 ? 'rank-silver' : 'rank-bronze';
+    let tags = `<span class="s-tag tag-region">${s.town}</span>`;
+    if (s.sap) tags += '<span class="s-tag tag-sap">SAP</span>';
+    if (s.gep) tags += '<span class="s-tag tag-gep">GEP</span>';
+    if (s.gender === 'Girls') tags += '<span class="s-tag tag-girls">女校</span>';
+    if (s.type === 'Govt-aided') tags += '<span class="s-tag tag-aided">政府资助</span>';
+
+    return `<div class="school-card" onclick="showProperties(${idx})">
+      <span class="rank-badge ${rankClass}">${s.rank}</span>
+      <div class="s-name">${s.name}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-left:22px;">${s.nameZh}</div>
+      <div class="s-meta">${tags}</div>
+      <div class="s-stats">
+        <div class="s-stat"><span class="s-val">${s.ratio}</span><span class="s-label">竞争比 Ratio</span></div>
+        <div class="s-stat"><span class="s-val">${s.applicants}</span><span class="s-label">申请人 Apps</span></div>
+        <div class="s-stat"><span class="s-val">${s.vacancies}</span><span class="s-label">空位 Vac</span></div>
+        <div class="s-stat"><span class="s-val">${s.properties.length}</span><span class="s-label">楼盘 Props</span></div>
+      </div>
+      <div class="s-addr">📍 ${s.addr}</div>
+    </div>`;
+  }).join('');
+}
+
+function showProperties(idx) {
+  activeSchoolIdx = idx;
+  const s = SCHOOLS[idx];
+  const typeFilter = document.getElementById('filterPropType').value;
+  const props = s.properties.filter(p => typeFilter === 'all' || p.type === typeFilter);
+
+  document.getElementById('schoolList').style.display = 'none';
+  const panel = document.getElementById('propPanel');
+  panel.classList.add('show');
+
+  showPropsOnMap(s);
+
+  const condoCount = s.properties.filter(p => p.type === 'Condo').length;
+  const hdbCount = s.properties.filter(p => p.type === 'HDB').length;
+  const ecCount = s.properties.filter(p => p.type === 'EC').length;
+
+  let tags = '';
+  if (s.sap) tags += '<span class="s-tag tag-sap" style="font-size:12px;">SAP</span>';
+  if (s.gep) tags += '<span class="s-tag tag-gep" style="font-size:12px;">GEP</span>';
+  if (s.gender === 'Girls') tags += '<span class="s-tag tag-girls" style="font-size:12px;">女校</span>';
+
+  document.getElementById('propContent').innerHTML = `
+    <div class="card">
+      <div class="card-title">
+        <span class="icon" style="background:#fef2f2;color:var(--accent)">🏫</span>
+        #${s.rank} ${s.name} · ${s.nameZh} ${tags}
+      </div>
+      <div class="school-detail">
+        <div class="sd-item"><div class="sd-val">${s.ratio}</div><div class="sd-label">竞争比 Ratio</div></div>
+        <div class="sd-item"><div class="sd-val">${s.applicants}</div><div class="sd-label">Phase 2C 申请人</div></div>
+        <div class="sd-item"><div class="sd-val">${s.vacancies}</div><div class="sd-label">Phase 2C 空位</div></div>
+        <div class="sd-item"><div class="sd-val">${condoCount}/${hdbCount}/${ecCount}</div><div class="sd-label">Condo/HDB/EC</div></div>
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;">
+        <b>📍 地址:</b> ${s.addr}<br>
+        <b>📋 类型:</b> ${s.type} · ${s.gender}<br>
+        <b>💡 特点:</b> ${s.note}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span class="icon" style="background:#f0fdf4;color:var(--success)">🏠</span>
+        1公里内热门楼盘 Nearby Properties (${props.length})
+      </div>
+      <div class="prop-grid">
+        ${props.map(p => {
+          const typeClass = p.type === 'HDB' ? 'p-type-hdb' : p.type === 'EC' ? 'p-type-ec' : 'p-type-condo';
+          const txnLabel = p.txns > 0 ? `近期 ${p.txns} 笔交易` : '新盘预售中';
+          return `<div class="prop-card">
+            <div class="p-header">
+              <span class="p-type ${typeClass}">${p.type}</span>
+              <span class="p-name">${p.name}</span>
+            </div>
+            <div class="p-details">
+              <b>产权:</b> ${p.tenure} · <b>建成:</b> ${p.top > 2026 ? p.top + ' (预计)' : p.top}<br>
+              ${p.units > 0 ? `<b>总户数:</b> ${p.units} · ` : ''}<b>交易:</b> <span>${txnLabel}</span>
+            </div>
+            <div class="p-price-bar">
+              <span class="p-price">${p.price}</span>
+              <span class="p-psf">~$${p.avgPsf} psf</span>
+              <span class="p-dist">📍 ${p.dist}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${props.length === 0 ? '<p style="color:var(--text-tertiary);font-size:13px;text-align:center;padding:20px;">当前筛选条件下无匹配房产</p>' : ''}
+    </div>`;
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderProperties() {
+  if (activeSchoolIdx !== null) {
+    showProperties(activeSchoolIdx);
+  }
+}
+
+function showSchoolList() {
+  renderSchools();
+}
+
+/* ─── init ─── */
+initMap();
+renderSchools();
+</script>
+</body>
+</html>
