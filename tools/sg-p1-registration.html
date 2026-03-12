@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SG P1 Registration 2026 | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#4f46e5;--pri-l:#818cf8;--pri-d:#4338ca;--pri-bg:#eef2ff;
+  --p1:#dc2626;--p2a:#f59e0b;--p2b:#10b981;--p2c:#6366f1;--p2cs:#8b5cf6;--p3:#64748b;
+  --surface:#fff;--srf-alt:#f8fafc;--border:#e2e8f0;
+  --text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 50%,#ede9fe 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:860px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:620px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+
+/* Timeline */
+.timeline{position:relative;padding:20px 0 20px 32px;margin:0}
+.timeline::before{content:'';position:absolute;left:14px;top:0;bottom:0;width:3px;background:var(--border);border-radius:2px}
+.tl-item{position:relative;margin-bottom:20px}
+.tl-dot{position:absolute;left:-26px;top:4px;width:16px;height:16px;border-radius:50%;border:3px solid var(--surface);z-index:1}
+.tl-phase{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.tl-date{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.tl-desc{font-size:12px;color:var(--sec);margin-bottom:4px}
+.tl-countdown{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;color:#fff}
+
+/* Checker */
+.checker-q{padding:14px 16px;background:var(--srf-alt);border-radius:10px;margin-bottom:10px;border:1.5px solid var(--border);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
+.checker-q:hover{border-color:var(--pri-l)}
+.checker-q.selected{border-color:var(--pri);background:var(--pri-bg)}
+.check-box{width:22px;height:22px;border:2px solid var(--border);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;transition:all .15s}
+.checker-q.selected .check-box{background:var(--pri);border-color:var(--pri)}
+.check-label{font-size:13px;font-weight:600}
+.check-hint{font-size:11px;color:var(--sec)}
+.checker-result{padding:16px;border-radius:10px;margin-top:14px;font-size:14px;font-weight:600}
+
+/* Priority */
+.priority-list{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.pri-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:13px;border:1px solid var(--border)}
+.pri-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0}
+.pri-bar{flex:1;height:8px;border-radius:4px;background:var(--border)}
+.pri-fill{height:100%;border-radius:4px;transition:width .4s ease}
+
+/* Phase cards */
+.phase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.ph-card{padding:14px 16px;border-radius:10px;border-left:4px solid var(--border);background:var(--srf-alt)}
+.ph-card .ph-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.ph-card .ph-date{font-size:12px;font-weight:600;margin-bottom:4px}
+.ph-card .ph-elig{font-size:12px;color:var(--sec);margin-bottom:6px}
+.ph-card .ph-tip{font-size:11px;padding:6px 10px;background:#fff;border-radius:6px;color:var(--pri-d);border:1px solid var(--border)}
+
+.checklist{list-style:none;padding:0;margin:12px 0}
+.checklist li{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;display:flex;align-items:flex-start;gap:8px}
+.checklist li::before{content:'☐';font-size:16px;color:var(--pri);flex-shrink:0}
+
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+@media(max-width:640px){.phase-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+<div class="container">
+  <header>
+    <h1>P1 Registration 2026</h1>
+    <p>新加坡小一报名指南 — 2026 Exercise (2027 Intake) · Phase Timeline · Eligibility · Distance Priority</p>
+  </header>
+
+  <div class="card">
+    <div style="padding:10px 14px;background:var(--pri-bg);border-radius:8px;font-size:13px;color:var(--pri-d);border:1px solid #c7d2fe;margin-bottom:4px">
+      <b>Eligible children:</b> Born 2 January 2020 — 1 January 2021 · All registration is online at MOE P1 website
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📅</span>Registration Timeline 报名时间线</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <!-- Eligibility Checker -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">🔍</span>Phase Eligibility Checker 阶段资格查询</div>
+    <p style="font-size:13px;color:var(--sec);margin-bottom:12px">Select all that apply for your target school 选择所有适用项：</p>
+    <div id="checkerQuestions"></div>
+    <div id="checkerResult"></div>
+  </div>
+
+  <!-- Distance Priority -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📍</span>Distance Priority (Balloting) 距离优先级</div>
+    <p style="font-size:13px;color:var(--sec);margin-bottom:12px">When applicants exceed vacancies, priority follows this strict order 当申请人超过学额时：</p>
+    <div class="priority-list" id="priorityList"></div>
+    <div style="margin-top:12px;padding:10px 14px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;border:1px solid #fde68a">
+      <b>Key insight:</b> Living within 1km of a popular school is now the single most important factor. Even SC families within 1km face balloting at top schools. Verify distance via OneMap School Query before registration.
+    </div>
+  </div>
+
+  <!-- Phase Details -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📋</span>Phase Details 各阶段详情</div>
+    <div class="phase-grid" id="phaseGrid"></div>
+  </div>
+
+  <!-- Checklist -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">✅</span>Preparation Checklist 准备清单</div>
+    <ul class="checklist">
+      <li>Verify home-school distance on <b>OneMap School Query</b> (onemap.gov.sg) 确认住家到学校距离</li>
+      <li>Ensure SingPass login works for online registration 确保 SingPass 登录正常</li>
+      <li>Prepare child's birth certificate and immunization records 准备出生证明和疫苗记录</li>
+      <li>If Phase 2A: confirm alumni membership / MOE KG enrolment / staff status 确认校友会/MOE幼儿园/职员身份</li>
+      <li>If Phase 2B: complete 40 hours of parent volunteering before 1 Jul 在7月1日前完成40小时义工</li>
+      <li>Check if target school was oversubscribed in previous years (KiasuParents forum) 查看目标学校往年超额情况</li>
+      <li>Have backup school choices ready in case of balloting 准备备选学校</li>
+      <li>For PR children: be aware PR applicants ballot separately after SC 永久居民单独抽签</li>
+    </ul>
+  </div>
+</div>
+<footer>
+  2026 P1 Registration Exercise for 2027 intake · Dates are estimated based on MOE patterns · Source: MOE<br>
+  SmartTools — <a href="../index.html" style="color:var(--pri)">Home</a>
+</footer>
+<script>
+const PHASES=[
+  {id:'p1',name:'Phase 1',nameZh:'第一阶段',dates:'1 – 3 Jul 2026',start:'2026-07-01',color:'var(--p1)',
+   elig:'Sibling studying at the school 兄弟姐妹在该校就读',
+   tip:'Guaranteed admission — no balloting. Register in this phase if eligible.'},
+  {id:'p2a',name:'Phase 2A',nameZh:'第二阶段A',dates:'10 – 11 Jul 2026',start:'2026-07-10',color:'var(--p2a)',
+   elig:'Parent/sibling is former student & alumni member · Child from MOE KG at school · Staff child 校友会成员/MOE幼儿园/教职员工子女',
+   tip:'Register for alumni association early (at least 1 year before). MOE KG children get automatic eligibility.'},
+  {id:'p2b',name:'Phase 2B',nameZh:'第二阶段B',dates:'21 – 22 Jul 2026',start:'2026-07-21',color:'var(--p2b)',
+   elig:'Parent volunteered ≥40hrs · Endorsed member of school-connected church/clan · Active community leader 家长义工40小时/教堂宗乡会成员/社区领袖',
+   tip:'Parent volunteering must be completed by 30 Jun. Start 1-2 years ahead — popular schools fill volunteer slots fast.'},
+  {id:'p2c',name:'Phase 2C',nameZh:'第二阶段C',dates:'29 – 31 Jul 2026',start:'2026-07-29',color:'var(--p2c)',
+   elig:'All SC and PR children not yet registered 所有尚未报名的公民和永久居民儿童',
+   tip:'Distance is king here. SC within 1km get first priority. For popular schools, even 1km families may face balloting.'},
+  {id:'p2cs',name:'Phase 2C Supplementary',nameZh:'第二阶段C补充',dates:'18 – 19 Aug 2026',start:'2026-08-18',color:'var(--p2cs)',
+   elig:'Children not placed after Phase 2C 2C未获学额的儿童',
+   tip:'Limited school choices remain. Consider less popular schools with good reputations nearby.'},
+  {id:'p3',name:'Phase 3',nameZh:'第三阶段',dates:'September 2026',start:'2026-09-01',color:'var(--p3)',
+   elig:'International students (non-SC, non-PR) 国际学生',
+   tip:'Very limited vacancies. Apply to multiple schools. Consider international schools as backup.'}
+];
+
+const CHECKER=[
+  {id:'sibling',text:'Child has sibling currently at the target school',zh:'孩子有兄弟姐妹在目标学校就读',phase:'p1'},
+  {id:'alumni',text:'Parent/sibling is former student AND registered alumni member',zh:'父母/兄姐是该校校友且注册校友会',phase:'p2a'},
+  {id:'moek',text:'Child is in MOE Kindergarten at the target school',zh:'孩子在目标学校的MOE幼儿园',phase:'p2a'},
+  {id:'staff',text:'Parent is a staff member of the target school',zh:'父母是该校教职员工',phase:'p2a'},
+  {id:'volunteer',text:'Parent has completed ≥40 hours volunteering at the school',zh:'父母已完成40小时义工',phase:'p2b'},
+  {id:'church',text:'Parent is endorsed member of school-connected church/clan',zh:'父母是学校关联教堂/宗乡会认可成员',phase:'p2b'},
+  {id:'community',text:'Parent is active community leader endorsed by school',zh:'父母是学校认可的社区领袖',phase:'p2b'}
+];
+
+const PRIORITY=[
+  {label:'SC within 1km 公民1公里内',color:'#dc2626',pct:100},
+  {label:'SC 1 – 2km 公民1-2公里',color:'#f59e0b',pct:80},
+  {label:'SC > 2km 公民2公里外',color:'#6366f1',pct:60},
+  {label:'PR within 1km 永久居民1公里内',color:'#10b981',pct:45},
+  {label:'PR 1 – 2km 永久居民1-2公里',color:'#8b5cf6',pct:30},
+  {label:'PR > 2km 永久居民2公里外',color:'#94a3b8',pct:15}
+];
+
+function daysBetween(a,b){return Math.ceil((new Date(a)-new Date(b))/(86400000))}
+
+function renderTimeline(){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('timeline').innerHTML=PHASES.map(p=>{
+    const days=daysBetween(p.start,today);
+    let cdText='',cdColor='';
+    if(days>0){cdText=`${days} days away`;cdColor=p.color}
+    else if(days>-7){cdText='NOW / Just passed';cdColor='#10b981'}
+    else{cdText='Completed';cdColor='#94a3b8'}
+    return `<div class="tl-item">
+      <div class="tl-dot" style="background:${p.color}"></div>
+      <div class="tl-phase" style="color:${p.color}">${p.name} ${p.nameZh}</div>
+      <div class="tl-date">${p.dates}</div>
+      <div class="tl-desc">${p.elig}</div>
+      <span class="tl-countdown" style="background:${cdColor}">${cdText}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderChecker(){
+  const el=document.getElementById('checkerQuestions');
+  el.innerHTML=CHECKER.map(q=>`
+    <div class="checker-q" id="cq_${q.id}" onclick="toggleCheck('${q.id}')">
+      <div class="check-box" id="cb_${q.id}"></div>
+      <div><div class="check-label">${q.text}</div><div class="check-hint">${q.zh}</div></div>
+    </div>`).join('');
+  updateChecker();
+}
+const checked=new Set();
+function toggleCheck(id){
+  if(checked.has(id)) checked.delete(id); else checked.add(id);
+  document.getElementById('cq_'+id).classList.toggle('selected',checked.has(id));
+  document.getElementById('cb_'+id).textContent=checked.has(id)?'✓':'';
+  updateChecker();
+}
+function updateChecker(){
+  let earliest='p2c';
+  for(const q of CHECKER){
+    if(checked.has(q.id)){
+      const order=['p1','p2a','p2b','p2c'];
+      if(order.indexOf(q.phase)<order.indexOf(earliest)) earliest=q.phase;
+    }
+  }
+  const phase=PHASES.find(p=>p.id===earliest);
+  const isDefault=earliest==='p2c'&&checked.size===0;
+  document.getElementById('checkerResult').innerHTML=`
+    <div class="checker-result" style="background:${isDefault?'var(--srf-alt)':earliest==='p1'?'#fef2f2':earliest==='p2a'?'#fffbeb':earliest==='p2b'?'#ecfdf5':'var(--pri-bg)'};
+      border:1.5px solid ${isDefault?'var(--border)':phase.color};color:${isDefault?'var(--sec)':'var(--text)'}">
+      ${isDefault?'Select your eligibility criteria above to find your earliest phase 选择上方条件查看最早可报名阶段':
+      `Your earliest eligible phase: <span style="color:${phase.color};font-weight:700">${phase.name}</span> (${phase.dates})<br>
+      <span style="font-size:12px;font-weight:400;color:var(--sec)">${phase.elig}</span>`}
+    </div>`;
+}
+
+function renderPriority(){
+  document.getElementById('priorityList').innerHTML=PRIORITY.map((p,i)=>`
+    <div class="pri-item">
+      <div class="pri-num" style="background:${p.color}">${i+1}</div>
+      <div style="flex:1"><div style="font-weight:600;font-size:13px">${p.label}</div>
+        <div class="pri-bar"><div class="pri-fill" style="width:${p.pct}%;background:${p.color}"></div></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderPhaseCards(){
+  document.getElementById('phaseGrid').innerHTML=PHASES.map(p=>`
+    <div class="ph-card" style="border-left-color:${p.color}">
+      <div class="ph-name" style="color:${p.color}">${p.name} ${p.nameZh}</div>
+      <div class="ph-date">${p.dates}</div>
+      <div class="ph-elig">${p.elig}</div>
+      <div class="ph-tip">💡 ${p.tip}</div>
+    </div>`).join('');
+}
+
+renderTimeline();
+renderChecker();
+renderPriority();
+renderPhaseCards();
+</script>
+</body>
+</html>

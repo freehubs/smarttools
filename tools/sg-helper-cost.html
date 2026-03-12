@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SG Helper Cost Calculator | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#0891b2;--pri-l:#22d3ee;--pri-d:#0e7490;--pri-bg:#ecfeff;
+  --accent:#6366f1;--ok:#10b981;--warn:#f59e0b;--danger:#ef4444;
+  --surface:#fff;--srf-alt:#f8fafc;--border:#e2e8f0;
+  --text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#ecfeff 0%,#cffafe 50%,#e0f2fe 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:820px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:600px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.field{flex:1;min-width:170px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(8,145,178,.12)}
+.hint{font-size:11px;color:var(--tri);margin-top:3px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.sum-card{text-align:center;padding:14px 12px;background:var(--pri-bg);border-radius:10px;border:1px solid #a5f3fc}
+.sum-card.hl{background:linear-gradient(135deg,var(--pri),var(--pri-d));border:none}
+.sum-card.hl .sum-val,.sum-card.hl .sum-lbl{color:#fff}
+.sum-val{font-size:20px;font-weight:700;color:var(--pri-d)}
+.sum-lbl{font-size:11px;color:var(--sec);margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+thead th{padding:8px;text-align:right;font-weight:600;color:var(--sec);border-bottom:2px solid var(--border);font-size:11px}
+thead th:first-child{text-align:left}
+tbody td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}
+tbody td:first-child{text-align:left;font-weight:600}
+tbody tr:hover{background:var(--srf-alt)}
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;margin-top:16px}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.donut-legend .leg-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.leg-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.compare-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.cmp-box{padding:16px;border-radius:10px;text-align:center}
+.cmp-box h4{font-size:13px;font-weight:700;margin-bottom:6px}
+.cmp-box .big{font-size:22px;font-weight:700}
+.cmp-box .det{font-size:11px;color:var(--sec);margin-top:4px}
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+@media(max-width:640px){.summary-grid{grid-template-columns:1fr 1fr}.compare-row{grid-template-columns:1fr}.row{flex-direction:column}.field{min-width:0}}
+</style>
+</head>
+<body>
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:820px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+<div class="container">
+  <header>
+    <h1>SG Helper Cost Calculator</h1>
+    <p>新加坡女佣成本计算器 — Salary + Levy + Insurance + Agency · 全面月度/年度成本明细</p>
+  </header>
+
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">👤</span>Helper Profile 女佣信息</div>
+    <div class="row">
+      <div class="field">
+        <label>Nationality 国籍</label>
+        <select id="nationality" onchange="prefill();compute()">
+          <option value="filipino">Filipino 菲律宾</option>
+          <option value="indonesian">Indonesian 印尼</option>
+          <option value="myanmar">Myanmar 缅甸</option>
+          <option value="srilanka">Sri Lanka 斯里兰卡</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Experience 经验</label>
+        <select id="experience" onchange="prefill();compute()">
+          <option value="new">New 新手</option>
+          <option value="transfer">Transfer 转聘</option>
+          <option value="experienced">Experienced 有经验</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Levy Type 征费类型</label>
+        <select id="levyType" onchange="compute()">
+          <option value="standard">Standard 标准 ($300/mo)</option>
+          <option value="concessionary">Concessionary 优惠 ($60/mo)</option>
+        </select>
+        <div class="hint">Concessionary if: child under 16, senior 67+, or disabled household member</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">💰</span>Monthly Costs 月度费用 (Editable)</div>
+    <div class="row">
+      <div class="field">
+        <label>Monthly Salary 月薪 (SGD)</label>
+        <input id="salary" type="text" inputmode="numeric" value="700" oninput="fmtInput(this);compute()">
+      </div>
+      <div class="field">
+        <label>Food & Utilities 伙食水电 (SGD)</label>
+        <input id="food" type="text" inputmode="numeric" value="200" oninput="fmtInput(this);compute()">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Transport & Phone 交通通讯 (SGD)</label>
+        <input id="transport" type="text" inputmode="numeric" value="100" oninput="fmtInput(this);compute()">
+      </div>
+      <div class="field">
+        <label>Rest Day Comp. 休息日补偿 (SGD/mo)</label>
+        <input id="restday" type="text" inputmode="numeric" value="0" oninput="fmtInput(this);compute()">
+        <div class="hint">~1 day's wage if helper works on off days</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:#eef2ff;color:var(--accent)">📝</span>One-Time Costs 一次性费用 (Editable)</div>
+    <div class="row">
+      <div class="field">
+        <label>Agency Fee 中介费 (SGD)</label>
+        <input id="agencyFee" type="text" inputmode="numeric" value="2,500" oninput="fmtInput(this);compute()">
+      </div>
+      <div class="field">
+        <label>Insurance (26-mo) 保险 (SGD)</label>
+        <input id="insurance" type="text" inputmode="numeric" value="600" oninput="fmtInput(this);compute()">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Work Permit (Apply+Issue) 工作准证</label>
+        <input id="wpFee" type="text" inputmode="numeric" value="70" oninput="fmtInput(this);compute()">
+      </div>
+      <div class="field">
+        <label>SIP + Medical 入境培训+体检</label>
+        <input id="sipMed" type="text" inputmode="numeric" value="140" oninput="fmtInput(this);compute()">
+        <div class="hint">SIP $76.40 + Medical ~$60</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Annual Airfare 年度机票 (SGD)</label>
+        <input id="airfare" type="text" inputmode="numeric" value="400" oninput="fmtInput(this);compute()">
+      </div>
+      <div class="field">
+        <label>6-Monthly Medical Checkup 半年体检</label>
+        <input id="checkup" type="text" inputmode="numeric" value="50" oninput="fmtInput(this);compute()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📊</span>Cost Summary 费用汇总</div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div id="detailSection"></div>
+    <div class="donut-wrap" id="donutWrap"></div>
+  </div>
+
+  <!-- Standard vs Concessionary -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:#ecfdf5;color:var(--ok)">💡</span>Standard vs Concessionary Levy 标准 vs 优惠征费</div>
+    <div class="compare-row" id="levyCompare"></div>
+  </div>
+</div>
+<footer>
+  Levy rates effective 2026 · Salary ranges are indicative · Source: MOM, HelperChoice, Income Insurance<br>
+  SmartTools — <a href="../index.html" style="color:var(--pri)">Home</a>
+</footer>
+<script>
+const DEFAULTS={
+  filipino:{salary:700,agency:{new:2500,transfer:1200,experienced:1800}},
+  indonesian:{salary:600,agency:{new:2800,transfer:1000,experienced:1500}},
+  myanmar:{salary:550,agency:{new:2000,transfer:800,experienced:1200}},
+  srilanka:{salary:550,agency:{new:2000,transfer:800,experienced:1200}}
+};
+const LEVY={standard:300,concessionary:60};
+
+function parseNum(s){return parseFloat(String(s).replace(/[^0-9.]/g,''))||0}
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
+function fmtD(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtInput(el){const v=parseNum(el.value);if(v>=0){const p=el.selectionStart;el.value=fmt(v);try{el.setSelectionRange(p,p)}catch(e){}}}
+
+function prefill(){
+  const nat=document.getElementById('nationality').value;
+  const exp=document.getElementById('experience').value;
+  const d=DEFAULTS[nat];
+  document.getElementById('salary').value=fmt(d.salary);
+  document.getElementById('agencyFee').value=fmt(d.agency[exp]);
+}
+
+function compute(){
+  const levy=LEVY[document.getElementById('levyType').value];
+  const salary=parseNum(document.getElementById('salary').value);
+  const food=parseNum(document.getElementById('food').value);
+  const transport=parseNum(document.getElementById('transport').value);
+  const restday=parseNum(document.getElementById('restday').value);
+  const agencyFee=parseNum(document.getElementById('agencyFee').value);
+  const insurance=parseNum(document.getElementById('insurance').value);
+  const wpFee=parseNum(document.getElementById('wpFee').value);
+  const sipMed=parseNum(document.getElementById('sipMed').value);
+  const airfare=parseNum(document.getElementById('airfare').value);
+  const checkup=parseNum(document.getElementById('checkup').value);
+
+  const monthlyRecurring=salary+levy+food+transport+restday;
+  const medMonthly=Math.round(checkup/6*100)/100;
+  const airMonthly=Math.round(airfare/12*100)/100;
+  const monthlyAll=monthlyRecurring+medMonthly+airMonthly;
+  const annualRecurring=monthlyRecurring*12+airfare+checkup*2;
+
+  const oneTime=agencyFee+insurance+wpFee+sipMed;
+  const firstYear=annualRecurring+oneTime;
+  const twoYear=annualRecurring*2+oneTime;
+  const hourlyRate=monthlyAll/(26*10);
+
+  document.getElementById('summaryGrid').innerHTML=`
+    <div class="sum-card hl"><div class="sum-val">$${fmt(Math.round(monthlyAll))}</div><div class="sum-lbl">Monthly All-In 月度总成本</div></div>
+    <div class="sum-card"><div class="sum-val">$${fmt(annualRecurring)}</div><div class="sum-lbl">Annual Recurring 年度经常性</div></div>
+    <div class="sum-card"><div class="sum-val">$${fmt(Math.round(firstYear))}</div><div class="sum-lbl">First Year Total 首年总成本</div></div>
+    <div class="sum-card"><div class="sum-val">$${fmtD(hourlyRate)}</div><div class="sum-lbl">Effective Hourly 等效时薪</div></div>`;
+
+  const recurItems=[
+    {name:'Monthly Salary 月薪',amt:salary},
+    {name:'Government Levy 政府征费',amt:levy},
+    {name:'Food & Utilities 伙食水电',amt:food},
+    {name:'Transport & Phone 交通通讯',amt:transport},
+    {name:'Rest Day Compensation 休息日补偿',amt:restday},
+    {name:'Medical Checkup (amortized) 体检分摊',amt:medMonthly},
+    {name:'Airfare (amortized) 机票分摊',amt:airMonthly}
+  ];
+  const oneItems=[
+    {name:'Agency Fee 中介费',amt:agencyFee},
+    {name:'Insurance (26-mo) 保险',amt:insurance},
+    {name:'Work Permit (Apply+Issue) 工作准证',amt:wpFee},
+    {name:'SIP + Medical Exam 入境培训+体检',amt:sipMed}
+  ];
+
+  document.getElementById('detailSection').innerHTML=`
+    <h4 style="font-size:14px;color:var(--sec);margin:12px 0 6px">Monthly Recurring 月度经常性费用</h4>
+    <table><thead><tr><th>Item 项目</th><th>Amount (SGD)</th></tr></thead>
+    <tbody>${recurItems.map(i=>`<tr><td>${i.name}</td><td style="font-weight:700">$${fmtD(i.amt)}</td></tr>`).join('')}
+    <tr style="font-weight:700;border-top:2px solid var(--border)"><td>Monthly Total</td><td>$${fmtD(monthlyAll)}</td></tr></tbody></table>
+
+    <h4 style="font-size:14px;color:var(--sec);margin:20px 0 6px">One-Time Upfront 一次性费用</h4>
+    <table><thead><tr><th>Item 项目</th><th>Amount (SGD)</th></tr></thead>
+    <tbody>${oneItems.map(i=>`<tr><td>${i.name}</td><td style="font-weight:700">$${fmt(i.amt)}</td></tr>`).join('')}
+    <tr style="font-weight:700;border-top:2px solid var(--border)"><td>One-Time Total</td><td>$${fmt(oneTime)}</td></tr></tbody></table>`;
+
+  // Donut
+  const segments=[
+    {label:'Salary 薪资',amt:salary,color:'var(--pri)'},
+    {label:'Levy 征费',amt:levy,color:'var(--accent)'},
+    {label:'Food 伙食',amt:food,color:'var(--warn)'},
+    {label:'Transport 交通',amt:transport,color:'var(--ok)'},
+    {label:'Other 其他',amt:restday+medMonthly+airMonthly,color:'#94a3b8'}
+  ];
+  const total=segments.reduce((s,x)=>s+x.amt,0)||1;
+  const circ=377;
+  let offset=circ*0.25;
+  let arcs='';
+  segments.forEach(seg=>{
+    const pct=seg.amt/total;
+    const dash=pct*circ;
+    arcs+=`<circle cx="80" cy="80" r="60" fill="none" stroke="${seg.color}" stroke-width="22" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${offset}" transform="rotate(-90 80 80)"/>`;
+    offset-=dash;
+  });
+  document.getElementById('donutWrap').innerHTML=`
+    <svg width="140" height="140" viewBox="0 0 160 160">
+      <circle cx="80" cy="80" r="60" fill="none" stroke="#e2e8f0" stroke-width="22"/>
+      ${arcs}
+      <text x="80" y="76" text-anchor="middle" font-size="15" font-weight="700" fill="var(--pri-d)">$${fmt(Math.round(monthlyAll))}</text>
+      <text x="80" y="92" text-anchor="middle" font-size="10" fill="var(--sec)">/month</text>
+    </svg>
+    <div class="donut-legend">${segments.map(s=>`<div class="leg-item"><span class="leg-dot" style="background:${s.color}"></span>${s.label}: $${fmt(Math.round(s.amt))} (${(s.amt/total*100).toFixed(0)}%)</div>`).join('')}</div>`;
+
+  // Levy comparison
+  const stdMonthly=salary+LEVY.standard+food+transport+restday+medMonthly+airMonthly;
+  const conMonthly=salary+LEVY.concessionary+food+transport+restday+medMonthly+airMonthly;
+  const savingsMonthly=LEVY.standard-LEVY.concessionary;
+  const savingsAnnual=savingsMonthly*12;
+  document.getElementById('levyCompare').innerHTML=`
+    <div class="cmp-box" style="background:#fff7ed;border:1.5px solid #fed7aa">
+      <h4 style="color:#b45309">Standard Levy 标准</h4>
+      <div class="big" style="color:#b45309">$${fmt(Math.round(stdMonthly))}<span style="font-size:12px;font-weight:400">/mo</span></div>
+      <div class="det">Levy: $300/mo · Annual: $${fmt(Math.round(stdMonthly*12+airfare+checkup*2+oneTime))}</div>
+    </div>
+    <div class="cmp-box" style="background:#ecfdf5;border:1.5px solid #a7f3d0">
+      <h4 style="color:#059669">Concessionary Levy 优惠</h4>
+      <div class="big" style="color:#059669">$${fmt(Math.round(conMonthly))}<span style="font-size:12px;font-weight:400">/mo</span></div>
+      <div class="det">Levy: $60/mo · Save $${fmt(savingsAnnual)}/yr ($${fmt(savingsMonthly)}/mo)</div>
+    </div>`;
+}
+
+compute();
+</script>
+</body>
+</html>

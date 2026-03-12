@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SG Kindergarten Fee Calculator | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#7c3aed;--pri-l:#a78bfa;--pri-d:#6d28d9;--pri-bg:#f5f3ff;
+  --accent:#ec4899;--ok:#10b981;--warn:#f59e0b;
+  --surface:#fff;--srf-alt:#f8fafc;--border:#e2e8f0;
+  --text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#f5f3ff 0%,#ede9fe 50%,#fdf2f8 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:860px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:620px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.field{flex:1;min-width:170px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+.hint{font-size:11px;color:var(--tri);margin-top:3px}
+.toggle-group{display:flex;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.toggle-group button{flex:1;padding:10px 6px;border:none;background:var(--srf-alt);font-size:12px;font-weight:600;color:var(--sec);cursor:pointer;font-family:inherit;transition:all .15s}
+.toggle-group button.active{background:var(--pri);color:#fff}
+.range-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.range-row input[type=range]{flex:1;height:6px;-webkit-appearance:none;background:var(--border);border-radius:3px;outline:none}
+.range-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--pri);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.range-val{min-width:80px;font-size:14px;font-weight:700;color:var(--pri-d);text-align:right}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.sum-card{text-align:center;padding:14px 12px;background:var(--pri-bg);border-radius:10px;border:1px solid #ddd6fe}
+.sum-card.hl{background:linear-gradient(135deg,var(--pri),var(--pri-d));border:none}
+.sum-card.hl .sum-val,.sum-card.hl .sum-lbl{color:#fff}
+.sum-val{font-size:20px;font-weight:700;color:var(--pri-d)}
+.sum-lbl{font-size:11px;color:var(--sec);margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+thead th{padding:8px;text-align:right;font-weight:600;color:var(--sec);border-bottom:2px solid var(--border);font-size:11px}
+thead th:first-child{text-align:left}
+tbody td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}
+tbody td:first-child{text-align:left;font-weight:600}
+tbody tr:hover{background:var(--srf-alt)}
+.compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+.cmp-card{padding:14px;border-radius:10px;border:1.5px solid var(--border);text-align:center}
+.cmp-card.best{border-color:var(--ok);background:#ecfdf5}
+.cmp-card h4{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--pri-d)}
+.cmp-card .big{font-size:22px;font-weight:700}
+.cmp-card .det{font-size:11px;color:var(--sec);margin-top:4px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;color:#fff;background:var(--ok)}
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+@media(max-width:640px){.summary-grid{grid-template-columns:1fr 1fr}.compare-grid{grid-template-columns:1fr 1fr}.row{flex-direction:column}.field{min-width:0}.toggle-group button{font-size:11px;padding:8px 4px}}
+</style>
+</head>
+<body>
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+<div class="container">
+  <header>
+    <h1>SG Kindergarten Fee Calculator</h1>
+    <p>新加坡幼儿园费用计算器 — MOE / Anchor / Partner / Private · 政府补贴 · 费用对比</p>
+  </header>
+
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">👶</span>Child & Centre Info 孩子与幼儿园</div>
+    <div class="row">
+      <div class="field">
+        <label>Citizenship 国籍</label>
+        <select id="citizenship" onchange="compute()">
+          <option value="SC">Singapore Citizen 公民</option>
+          <option value="PR">Permanent Resident 永久居民</option>
+          <option value="FR">Foreigner 外国人</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Age Group 年龄段</label>
+        <select id="ageGroup" onchange="compute()">
+          <option value="childcare" selected>Childcare 托儿 (18mo-4yr)</option>
+          <option value="kg">Kindergarten K1-K2 (5-6yr)</option>
+          <option value="infant">Infant Care 婴儿 (2-18mo)</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-title" style="margin-top:4px;margin-bottom:10px;font-size:13px">Centre Type 幼儿园类型</div>
+    <div class="toggle-group" id="centreToggle">
+      <button data-v="moe" onclick="setCentre('moe')">MOE KG</button>
+      <button data-v="anchor" class="active" onclick="setCentre('anchor')">Anchor 主要</button>
+      <button data-v="partner" onclick="setCentre('partner')">Partner 伙伴</button>
+      <button data-v="private" onclick="setCentre('private')">Private 私立</button>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Programme 课程类型</label>
+        <select id="programme" onchange="compute()">
+          <option value="fullday">Full-day 全日制</option>
+          <option value="halfday">Half-day 半日制</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Mother Working 母亲工作</label>
+        <select id="motherWork" onchange="compute()">
+          <option value="yes">Yes 是 (higher subsidy)</option>
+          <option value="no">No 否</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="privateFeeField" style="display:none;margin-bottom:14px">
+      <label>Private Centre Monthly Fee 私立月费 (SGD)</label>
+      <input id="privateFee" type="text" inputmode="numeric" value="1,800" oninput="fmtInput(this);compute()">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">💰</span>Household Income 家庭收入</div>
+    <div class="range-row">
+      <input type="range" id="incSlider" min="0" max="15000" step="500" value="6000" oninput="compute()">
+      <span class="range-val" id="incVal">$6,000</span>
+    </div>
+    <div class="hint">Gross monthly household income · Affects Additional Subsidy (SC only, ≤$12,000)</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📊</span>Results 计算结果</div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div id="subsidyDetail"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:#fdf2f8;color:var(--accent)">⚖️</span>Centre Type Comparison 幼儿园对比</div>
+    <div class="compare-grid" id="compareGrid"></div>
+    <div class="hint" style="margin-top:10px;text-align:center">Based on your citizenship, age group, programme, and income level</div>
+  </div>
+</div>
+<footer>
+  Fees effective Jan 2026 · Subsidies for SC only · Source: MOE, ECDA, My First Skool<br>
+  SmartTools — <a href="../index.html" style="color:var(--pri)">Home</a>
+</footer>
+<script>
+let centre='anchor';
+const FEES={
+  moe:{kg:{SC:160,PR:320,FR:null},childcare:{SC:160,PR:320,FR:null},infant:{SC:null,PR:null,FR:null}},
+  anchor:{kg:{SC:610,PR:835,FR:1188},childcare:{SC:610,PR:835,FR:1188},infant:{SC:1150,PR:1500,FR:1900}},
+  partner:{kg:{SC:720,PR:960,FR:1380},childcare:{SC:720,PR:960,FR:1380},infant:{SC:1350,PR:1720,FR:2100}},
+  private:{kg:{SC:1800,PR:1800,FR:1800},childcare:{SC:1800,PR:1800,FR:1800},infant:{SC:2200,PR:2200,FR:2200}}
+};
+const HALFDAY_RATIO={moe:1,anchor:0.65,partner:0.65,private:0.7};
+const BASIC_SUB={working:{infant:600,childcare:300,kg:300},notworking:{infant:150,childcare:150,kg:150}};
+const ADD_SUB=[
+  {max:3000,childcare:467,infant:640},{max:4500,childcare:440,infant:610},
+  {max:6000,childcare:340,infant:480},{max:7500,childcare:260,infant:380},
+  {max:9000,childcare:190,infant:290},{max:10500,childcare:130,infant:200},
+  {max:12000,childcare:80,infant:130},{max:Infinity,childcare:0,infant:0}
+];
+const KIFAS=[{max:3000,amt:170},{max:4500,amt:140},{max:6000,amt:100},{max:7500,amt:60},{max:9000,amt:30},{max:Infinity,amt:0}];
+
+function parseNum(s){return parseFloat(String(s).replace(/[^0-9.]/g,''))||0}
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
+function fmtInput(el){const v=parseNum(el.value);if(v>0){const p=el.selectionStart;el.value=fmt(v);try{el.setSelectionRange(p,p)}catch(e){}}}
+
+function setCentre(c){
+  centre=c;
+  document.querySelectorAll('#centreToggle button').forEach(b=>b.classList.toggle('active',b.dataset.v===c));
+  document.getElementById('privateFeeField').style.display=c==='private'?'':'none';
+  compute();
+}
+
+function getBaseFee(cType,age,cit){
+  if(cType==='private') return parseNum(document.getElementById('privateFee').value);
+  const f=FEES[cType]?.[age]?.[cit];
+  return f||null;
+}
+
+function calcSubsidy(cType,age,cit,income,working,programme){
+  if(cit!=='SC') return {basic:0,additional:0,kifas:0,total:0};
+  if(cType==='moe'&&age!=='kg') return {basic:0,additional:0,kifas:0,total:0};
+  const isHalf=programme==='halfday';
+  const wk=working==='yes'?'working':'notworking';
+  let basic=BASIC_SUB[wk][age]||0;
+  if(cType==='moe') basic=0;
+  if(isHalf) basic=Math.round(basic*0.5);
+  let additional=0;
+  const ageKey=age==='infant'?'infant':'childcare';
+  for(const tier of ADD_SUB){if(income<=tier.max){additional=tier[ageKey];break}}
+  if(cType==='moe') additional=0;
+  if(isHalf) additional=Math.round(additional*0.5);
+  let kifas=0;
+  if(cType==='moe'){for(const k of KIFAS){if(income<=k.max){kifas=k.amt;break}}}
+  return {basic,additional,kifas,total:basic+additional+kifas};
+}
+
+function compute(){
+  const cit=document.getElementById('citizenship').value;
+  const age=document.getElementById('ageGroup').value;
+  const prog=document.getElementById('programme').value;
+  const working=document.getElementById('motherWork').value;
+  const income=parseInt(document.getElementById('incSlider').value);
+  document.getElementById('incVal').textContent='$'+fmt(income);
+
+  let baseFee=getBaseFee(centre,age,cit);
+  if(baseFee===null){
+    document.getElementById('summaryGrid').innerHTML=`<div class="sum-card" style="grid-column:1/-1;padding:20px"><div class="sum-val" style="font-size:16px;color:var(--sec)">Not available for this combination</div><div class="sum-lbl">MOE Kindergarten only offers K1-K2 for SC/PR · No infant care</div></div>`;
+    document.getElementById('subsidyDetail').innerHTML='';
+    renderCompare(cit,age,prog,working,income);
+    return;
+  }
+  if(prog==='halfday') baseFee=Math.round(baseFee*(HALFDAY_RATIO[centre]||0.65));
+  const sub=calcSubsidy(centre,age,cit,income,working,prog);
+  const net=Math.max(baseFee-sub.total,0);
+  const annual=net*12;
+
+  document.getElementById('summaryGrid').innerHTML=`
+    <div class="sum-card"><div class="sum-val">$${fmt(baseFee)}</div><div class="sum-lbl">Monthly Fee 月费 (before subsidy)</div></div>
+    <div class="sum-card" style="background:#ecfdf5;border-color:#a7f3d0"><div class="sum-val" style="color:#059669">-$${fmt(sub.total)}</div><div class="sum-lbl">Total Subsidy 总补贴</div></div>
+    <div class="sum-card hl"><div class="sum-val">$${fmt(net)}</div><div class="sum-lbl">Net Payable 实付月费</div></div>
+    <div class="sum-card"><div class="sum-val">$${fmt(annual)}</div><div class="sum-lbl">Annual Cost 年度费用</div></div>`;
+
+  let detailHtml='';
+  if(cit==='SC'&&sub.total>0){
+    detailHtml=`<h4 style="font-size:14px;color:var(--sec);margin:12px 0 6px">Subsidy Breakdown 补贴明细</h4>
+    <table><thead><tr><th>Item 项目</th><th>Amount</th></tr></thead><tbody>
+    ${sub.basic>0?`<tr><td>Basic Subsidy 基本补贴 (${working==='yes'?'working':'non-working'} mother)</td><td style="color:#059669;font-weight:700">$${fmt(sub.basic)}</td></tr>`:''}
+    ${sub.additional>0?`<tr><td>Additional Subsidy 额外补贴 (income ≤$${fmt(income)})</td><td style="color:#059669;font-weight:700">$${fmt(sub.additional)}</td></tr>`:''}
+    ${sub.kifas>0?`<tr><td>KiFAS 幼儿园学费援助 (MOE KG only)</td><td style="color:#059669;font-weight:700">$${fmt(sub.kifas)}</td></tr>`:''}
+    <tr style="font-weight:700;border-top:2px solid var(--border)"><td>Total Subsidy</td><td style="color:#059669">$${fmt(sub.total)}</td></tr>
+    </tbody></table>`;
+  } else if(cit!=='SC'){
+    detailHtml='<div style="padding:10px 14px;background:#fff7ed;border-radius:8px;font-size:12px;color:#92400e;border:1px solid #fed7aa;margin-top:10px">Government subsidies are only available for Singapore Citizen children. 政府补贴仅适用于新加坡公民儿童。</div>';
+  }
+  document.getElementById('subsidyDetail').innerHTML=detailHtml;
+  renderCompare(cit,age,prog,working,income);
+}
+
+function renderCompare(cit,age,prog,working,income){
+  const types=[
+    {id:'moe',name:'MOE KG',color:'#6366f1'},
+    {id:'anchor',name:'Anchor<br>(MFS/PAP)',color:'#7c3aed'},
+    {id:'partner',name:'Partner',color:'#ec4899'},
+    {id:'private',name:'Private 私立',color:'#f59e0b'}
+  ];
+  let minNet=Infinity, cards=[];
+  for(const t of types){
+    let base=getBaseFee(t.id,age,cit);
+    if(base===null){cards.push({...t,base:null,net:null});continue}
+    if(prog==='halfday') base=Math.round(base*(HALFDAY_RATIO[t.id]||0.65));
+    const sub=calcSubsidy(t.id,age,cit,income,working,prog);
+    const net=Math.max(base-sub.total,0);
+    if(net<minNet) minNet=net;
+    cards.push({...t,base,sub:sub.total,net});
+  }
+  document.getElementById('compareGrid').innerHTML=cards.map(c=>{
+    if(c.net===null) return `<div class="cmp-card"><h4 style="color:${c.color}">${c.name}</h4><div class="big" style="color:var(--tri);font-size:14px">N/A</div><div class="det">Not available</div></div>`;
+    const isBest=c.net===minNet;
+    return `<div class="cmp-card${isBest?' best':''}">
+      <h4 style="color:${c.color}">${c.name}</h4>
+      <div class="big" style="color:${c.color}">$${fmt(c.net)}<span style="font-size:12px;font-weight:400;color:var(--sec)">/mo</span></div>
+      <div class="det">Fee $${fmt(c.base)} - Subsidy $${fmt(c.sub)}</div>
+      <div class="det">Annual: $${fmt(c.net*12)}</div>
+      ${isBest?'<div style="margin-top:6px"><span class="badge">Best Value</span></div>':''}
+    </div>`;
+  }).join('');
+}
+
+compute();
+</script>
+</body>
+</html>
