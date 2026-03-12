@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SG Mortgage Calculator | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#6366f1;--pri-l:#818cf8;--pri-d:#4f46e5;--pri-bg:#eef2ff;
+  --accent:#dc2626;--ok:#10b981;--warn:#f59e0b;
+  --surface:#fff;--srf-alt:#f8fafc;--border:#e2e8f0;
+  --text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --hdb:#0d9488;--bank:#6366f1;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 50%,#ede9fe 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:820px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:600px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.field{flex:1;min-width:170px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;
+  background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.hint{font-size:11px;color:var(--tri);margin-top:3px}
+
+.toggle-group{display:flex;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.toggle-group button{flex:1;padding:10px 8px;border:none;background:var(--srf-alt);font-size:13px;font-weight:600;
+  color:var(--sec);cursor:pointer;font-family:inherit;transition:all .15s}
+.toggle-group button.active{background:var(--pri);color:#fff}
+.toggle-group button[data-v="hdb"].active{background:var(--hdb)}
+
+.range-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.range-row input[type=range]{flex:1;height:6px;-webkit-appearance:none;background:var(--border);border-radius:3px;outline:none}
+.range-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--pri);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.range-val{min-width:50px;font-size:14px;font-weight:700;color:var(--pri-d);text-align:right}
+
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.sum-card{text-align:center;padding:14px 12px;background:var(--pri-bg);border-radius:10px;border:1px solid #c7d2fe}
+.sum-val{font-size:20px;font-weight:700;color:var(--pri-d)}
+.sum-lbl{font-size:11px;color:var(--sec);margin-top:2px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;color:#fff;margin-left:6px}
+.badge-ok{background:var(--ok)}.badge-fail{background:var(--accent)}.badge-warn{background:var(--warn)}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.compare-col{padding:16px;border-radius:10px;border:2px solid var(--border)}
+.compare-col.hdb-col{border-color:#99f6e4;background:#f0fdfa}
+.compare-col.bank-col{border-color:#c7d2fe;background:#eef2ff}
+.compare-col h3{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.compare-item{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid rgba(0,0,0,.06)}
+.compare-item:last-child{border-bottom:none}
+.compare-item .cv{font-weight:700}
+
+.amort-chart{display:flex;align-items:flex-end;gap:3px;height:180px;margin:16px 0;padding-bottom:20px;position:relative}
+.amort-bar{display:flex;flex-direction:column;justify-content:flex-end;flex:1;min-width:0;position:relative}
+.amort-bar .ab-p{background:var(--pri-l);border-radius:2px 2px 0 0}
+.amort-bar .ab-i{background:#fbbf24;border-radius:0 0 2px 2px}
+.amort-bar .ab-lbl{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--tri);white-space:nowrap}
+
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+thead th{padding:8px 8px;text-align:right;font-weight:600;color:var(--sec);border-bottom:2px solid var(--border)}
+thead th:first-child{text-align:left}
+tbody td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}
+tbody td:first-child{text-align:left;font-weight:600}
+
+.alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.alert-ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+.alert-fail{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+@media(max-width:640px){.summary-grid{grid-template-columns:1fr 1fr}.compare-grid{grid-template-columns:1fr}.row{flex-direction:column}.field{min-width:0}}
+</style>
+</head>
+<body>
+
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:820px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>SG Mortgage Calculator</h1>
+    <p>新加坡房贷计算器 — HDB Loan vs Bank Loan · TDSR & MSR Check · Amortization Schedule</p>
+  </header>
+
+  <!-- Loan Type -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">🏦</span>Loan Type 贷款类型</div>
+    <div class="toggle-group" id="loanToggle">
+      <button data-v="hdb" class="active" onclick="setLoan('hdb')">HDB Loan 建屋局贷款</button>
+      <button data-v="bank" onclick="setLoan('bank')">Bank Loan 银行贷款</button>
+      <button data-v="compare" onclick="setLoan('compare')">Compare 对比</button>
+    </div>
+    <div class="hint">HDB: 2.6% fixed, up to 80% LTV · Bank: ~2.5% (editable), up to 75% LTV</div>
+  </div>
+
+  <!-- Property & Loan -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">🏠</span>Property & Loan 房产与贷款</div>
+    <div class="row">
+      <div class="field">
+        <label>Property Price 房产价格 (SGD)</label>
+        <input id="propPrice" type="text" inputmode="numeric" value="1,200,000" oninput="fmtInput(this);compute()">
+      </div>
+      <div class="field">
+        <label>Loan Tenure 贷款年限</label>
+        <input id="tenure" type="number" min="5" max="30" value="25" onchange="compute()" oninput="compute()">
+        <div class="hint">Max 25 years (HDB) or 30 years (Bank, up to age 65)</div>
+      </div>
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px;display:block">Down Payment 首付比例</label>
+      <div class="range-row">
+        <input type="range" id="dpSlider" min="5" max="60" value="25" oninput="syncDP('slider');compute()">
+        <span class="range-val" id="dpVal">25%</span>
+      </div>
+      <div class="hint">Loan Amount 贷款额: <b id="loanAmtHint">$900,000</b></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <div class="field" id="bankRateField">
+        <label>Bank Interest Rate 银行利率 (%)</label>
+        <input id="bankRate" type="number" step="0.1" min="0.5" max="10" value="2.50" onchange="compute()" oninput="compute()">
+        <div class="hint">Current market: 2.0%-3.0% (SORA-based)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">💰</span>Income 收入 (for TDSR/MSR)</div>
+    <div class="row">
+      <div class="field">
+        <label>Gross Monthly Income 月总收入 (SGD)</label>
+        <input id="income" type="text" inputmode="numeric" value="12,000" oninput="fmtInput(this);compute()">
+      </div>
+      <div class="field">
+        <label>Existing Monthly Obligations 现有月供 (SGD)</label>
+        <input id="obligations" type="text" inputmode="numeric" value="0" oninput="fmtInput(this);compute()">
+        <div class="hint">Car loan, credit card min, other loans</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card" id="results">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📊</span>Results 计算结果</div>
+    <div id="alertSection"></div>
+    <div id="singleResult"></div>
+    <div id="compareResult" style="display:none"></div>
+  </div>
+
+  <!-- Amortization -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📈</span>Amortization 还款计划</div>
+    <div class="amort-chart" id="amortChart"></div>
+    <div style="display:flex;gap:16px;justify-content:center;font-size:12px;color:var(--sec);margin-bottom:12px">
+      <span><span style="display:inline-block;width:12px;height:12px;background:var(--pri-l);border-radius:2px;vertical-align:middle;margin-right:4px"></span>Principal 本金</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:#fbbf24;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Interest 利息</span>
+    </div>
+    <details>
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--sec);margin-bottom:8px">Show Full Table 完整还款表</summary>
+      <div style="overflow-x:auto"><table id="amortTable"></table></div>
+    </details>
+  </div>
+</div>
+
+<footer>
+  HDB Loan: 2.6% (CPF OA + 0.1%) · Bank stress test at 4% for TDSR · MSR 30% for HDB/EC only · Source: MAS/HDB<br>
+  SmartTools — <a href="../index.html" style="color:var(--pri)">Home</a>
+</footer>
+
+<script>
+let mode='hdb';
+const HDB_RATE=2.6,STRESS_RATE=4.0;
+
+function parseNum(s){return parseFloat(String(s).replace(/[^0-9.]/g,''))||0}
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
+function fmtInput(el){const v=parseNum(el.value);if(v>0){const p=el.selectionStart;el.value=fmt(v);try{el.setSelectionRange(p,p)}catch(e){}}}
+
+function setLoan(m){
+  mode=m;
+  document.querySelectorAll('#loanToggle button').forEach(b=>b.classList.toggle('active',b.dataset.v===m));
+  document.getElementById('bankRateField').style.display=(m==='hdb')?'none':'';
+  compute();
+}
+
+function syncDP(src){
+  const v=parseInt(document.getElementById('dpSlider').value);
+  document.getElementById('dpVal').textContent=v+'%';
+}
+
+function calcLoan(principal,annualRate,years){
+  const r=annualRate/100/12, n=years*12;
+  if(r===0) return {monthly:principal/n,totalInterest:0,total:principal,schedule:[]};
+  const monthly=principal*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  const total=monthly*n;
+  const schedule=[];
+  let bal=principal;
+  for(let yr=1;yr<=years;yr++){
+    let yrP=0,yrI=0;
+    for(let m=0;m<12;m++){
+      const intPart=bal*r;
+      const prinPart=monthly-intPart;
+      yrI+=intPart;yrP+=prinPart;
+      bal-=prinPart;
+    }
+    schedule.push({year:yr,principal:yrP,interest:yrI,balance:Math.max(bal,0)});
+  }
+  return {monthly,totalInterest:total-principal,total,schedule};
+}
+
+function compute(){
+  const price=parseNum(document.getElementById('propPrice').value);
+  const dp=parseInt(document.getElementById('dpSlider').value)/100;
+  const tenure=parseInt(document.getElementById('tenure').value)||25;
+  const income=parseNum(document.getElementById('income').value);
+  const obligations=parseNum(document.getElementById('obligations').value);
+  const bankRate=parseFloat(document.getElementById('bankRate').value)||2.5;
+
+  document.getElementById('dpVal').textContent=Math.round(dp*100)+'%';
+  const loanAmt=Math.round(price*(1-dp));
+  document.getElementById('loanAmtHint').textContent='$'+fmt(loanAmt);
+
+  const hdb=calcLoan(loanAmt,HDB_RATE,tenure);
+  const bank=calcLoan(loanAmt,bankRate,tenure);
+  const stressTest=calcLoan(loanAmt,Math.max(STRESS_RATE,bankRate),tenure);
+
+  const msrLimit=income*0.30;
+  const tdsrLimit=income*0.55;
+
+  if(mode==='compare'){
+    renderCompare(hdb,bank,stressTest,income,obligations,msrLimit,tdsrLimit,loanAmt,tenure,bankRate);
+  } else {
+    const loan=mode==='hdb'?hdb:bank;
+    const stress=mode==='hdb'?hdb:stressTest;
+    const rate=mode==='hdb'?HDB_RATE:bankRate;
+    renderSingle(loan,stress,income,obligations,msrLimit,tdsrLimit,loanAmt,tenure,rate);
+  }
+}
+
+function renderSingle(loan,stress,income,obligations,msrLimit,tdsrLimit,loanAmt,tenure,rate){
+  document.getElementById('singleResult').style.display='';
+  document.getElementById('compareResult').style.display='none';
+
+  const msrRatio=income>0?loan.monthly/income:0;
+  const tdsrRatio=income>0?(stress.monthly+obligations)/income:0;
+  const msrOk=msrRatio<=0.30;
+  const tdsrOk=tdsrRatio<=0.55;
+  const maxAfford=income>0?Math.floor((tdsrLimit-obligations)/stress.monthly*loanAmt):0;
+
+  let alertHtml='';
+  if(!tdsrOk) alertHtml+=`<div class="alert alert-fail">⚠️ <b>TDSR exceeded!</b> Your ratio is ${(tdsrRatio*100).toFixed(1)}% (limit 55%). Max affordable loan: $${fmt(Math.max(maxAfford,0))}</div>`;
+  if(mode==='hdb'&&!msrOk) alertHtml+=`<div class="alert alert-fail">⚠️ <b>MSR exceeded!</b> Your ratio is ${(msrRatio*100).toFixed(1)}% (limit 30%).</div>`;
+  if(mode==='hdb'&&Math.round((1-loanAmt/(loanAmt/(1-parseNum(document.getElementById('dpSlider').value)/100)))*100)<20)
+    alertHtml+=`<div class="alert alert-fail">⚠️ <b>LTV exceeded!</b> HDB Loan max LTV is 80% (min 20% down payment).</div>`;
+  if(tdsrOk&&(mode!=='hdb'||msrOk)) alertHtml+=`<div class="alert alert-ok">✅ All affordability checks passed.</div>`;
+  document.getElementById('alertSection').innerHTML=alertHtml;
+
+  document.getElementById('singleResult').innerHTML=`
+    <div class="summary-grid">
+      <div class="sum-card"><div class="sum-val">$${fmt(Math.round(loan.monthly))}</div><div class="sum-lbl">Monthly Payment 月供</div></div>
+      <div class="sum-card"><div class="sum-val">$${fmt(Math.round(loan.totalInterest))}</div><div class="sum-lbl">Total Interest 总利息</div></div>
+      <div class="sum-card"><div class="sum-val">$${fmt(Math.round(loan.total))}</div><div class="sum-lbl">Total Repayment 总还款</div></div>
+      <div class="sum-card"><div class="sum-val">${(tdsrRatio*100).toFixed(1)}%<span class="badge ${tdsrOk?'badge-ok':'badge-fail'}">${tdsrOk?'PASS':'FAIL'}</span></div><div class="sum-lbl">TDSR (limit 55%)</div></div>
+      ${mode==='hdb'?`<div class="sum-card"><div class="sum-val">${(msrRatio*100).toFixed(1)}%<span class="badge ${msrOk?'badge-ok':'badge-fail'}">${msrOk?'PASS':'FAIL'}</span></div><div class="sum-lbl">MSR (limit 30%)</div></div>`:''}
+    </div>`;
+
+  renderAmort(loan.schedule);
+}
+
+function renderCompare(hdb,bank,stress,income,obligations,msrLimit,tdsrLimit,loanAmt,tenure,bankRate){
+  document.getElementById('singleResult').style.display='none';
+  document.getElementById('compareResult').style.display='';
+  document.getElementById('alertSection').innerHTML='';
+
+  const saved=hdb.totalInterest-bank.totalInterest;
+  const items=[
+    ['Interest Rate 利率',HDB_RATE.toFixed(1)+'%',bankRate.toFixed(2)+'%'],
+    ['Monthly Payment 月供','$'+fmt(Math.round(hdb.monthly)),'$'+fmt(Math.round(bank.monthly))],
+    ['Total Interest 总利息','$'+fmt(Math.round(hdb.totalInterest)),'$'+fmt(Math.round(bank.totalInterest))],
+    ['Total Repayment 总还款','$'+fmt(Math.round(hdb.total)),'$'+fmt(Math.round(bank.total))],
+    ['TDSR Ratio',income>0?(hdb.monthly+obligations)/income*100:'—',income>0?(stress.monthly+obligations)/income*100:'—'],
+    ['MSR Ratio',income>0?(hdb.monthly/income*100).toFixed(1)+'%':'—','N/A'],
+  ];
+
+  document.getElementById('compareResult').innerHTML=`
+    <div style="text-align:center;padding:10px 14px;background:${saved>0?'#ecfdf5':'#fef2f2'};border-radius:8px;margin-bottom:16px;font-size:13px;color:${saved>0?'#065f46':'#991b1b'}">
+      ${saved>0?`🎉 Bank loan saves <b>$${fmt(Math.round(saved))}</b> in total interest over ${tenure} years`:`HDB loan is <b>$${fmt(Math.round(-saved))}</b> cheaper in total interest`}
+    </div>
+    <div class="compare-grid">
+      <div class="compare-col hdb-col">
+        <h3><span style="width:10px;height:10px;border-radius:50%;background:var(--hdb);display:inline-block"></span>HDB Loan</h3>
+        ${items.map(i=>`<div class="compare-item"><span>${i[0]}</span><span class="cv">${typeof i[1]==='number'?i[1].toFixed(1)+'%':i[1]}</span></div>`).join('')}
+      </div>
+      <div class="compare-col bank-col">
+        <h3><span style="width:10px;height:10px;border-radius:50%;background:var(--bank);display:inline-block"></span>Bank Loan</h3>
+        ${items.map(i=>`<div class="compare-item"><span>${i[0]}</span><span class="cv">${typeof i[2]==='number'?i[2].toFixed(1)+'%':i[2]}</span></div>`).join('')}
+      </div>
+    </div>
+    <div style="padding:10px 14px;background:#fff7ed;border-radius:8px;font-size:12px;color:#92400e;border:1px solid #fed7aa">
+      <b>Note:</b> Once you refinance from HDB to bank, you cannot return to HDB financing. HDB rate is fixed; bank rates may rise.
+    </div>`;
+
+  renderAmort(bank.schedule);
+}
+
+function renderAmort(schedule){
+  if(!schedule.length) return;
+  const maxAnnual=Math.max(...schedule.map(s=>s.principal+s.interest));
+  const chartH=160;
+  document.getElementById('amortChart').innerHTML=schedule.map(s=>{
+    const pH=Math.round(s.principal/(maxAnnual||1)*chartH);
+    const iH=Math.round(s.interest/(maxAnnual||1)*chartH);
+    return `<div class="amort-bar"><div class="ab-p" style="height:${pH}px"></div><div class="ab-i" style="height:${iH}px"></div>${s.year%5===0||s.year===1?`<span class="ab-lbl">Y${s.year}</span>`:''}</div>`;
+  }).join('');
+
+  let bal=schedule.length>0?schedule[0].principal+schedule[0].interest:0;
+  const opening=schedule.reduce((s,r)=>s+r.principal+r.interest,0);
+  let runBal=opening/schedule.length*schedule.length;
+  let openBal=schedule[0].principal+schedule[0].interest;
+
+  let cumP=0;
+  document.getElementById('amortTable').innerHTML=`
+    <thead><tr><th>Year</th><th>Opening Balance</th><th>Principal</th><th>Interest</th><th>Closing Balance</th></tr></thead>
+    <tbody>${schedule.map((s,i)=>{
+      const ob=i===0?(s.balance+s.principal):schedule[i-1].balance;
+      return `<tr><td>Year ${s.year}</td><td>$${fmt(Math.round(ob+s.principal))}</td><td>$${fmt(Math.round(s.principal))}</td><td>$${fmt(Math.round(s.interest))}</td><td>$${fmt(Math.round(s.balance))}</td></tr>`;
+    }).join('')}</tbody>`;
+}
+
+setLoan('hdb');
+</script>
+</body>
+</html>

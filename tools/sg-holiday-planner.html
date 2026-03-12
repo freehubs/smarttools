@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SG Holiday Planner 2026 | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#d97706;--pri-l:#fbbf24;--pri-d:#92400e;--pri-bg:#fffbeb;
+  --accent:#dc2626;--ok:#10b981;--surface:#fff;--srf-alt:#f8fafc;
+  --border:#e2e8f0;--text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --hol:#dc2626;--leave:#d97706;--weekend:#94a3b8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 50%,#fff7ed 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:900px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:600px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+.sum-card{text-align:center;padding:14px 12px;background:var(--pri-bg);border-radius:10px;border:1px solid #fde68a}
+.sum-val{font-size:22px;font-weight:700;color:var(--pri-d)}
+.sum-lbl{font-size:11px;color:var(--sec);margin-top:2px}
+
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:16px}
+.cal-month{background:var(--srf-alt);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.cal-month h4{font-size:13px;font-weight:700;text-align:center;margin-bottom:6px;color:var(--pri-d)}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:2px}
+.cal-header span{font-size:9px;text-align:center;color:var(--tri);font-weight:600;padding:2px 0}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.cal-day{text-align:center;font-size:11px;padding:3px 0;border-radius:4px;min-height:22px;line-height:22px;cursor:default}
+.cal-day.empty{visibility:hidden}
+.cal-day.today{box-shadow:inset 0 0 0 1.5px var(--pri)}
+.cal-day.weekend{color:var(--tri)}
+.cal-day.holiday{background:var(--hol);color:#fff;font-weight:700;border-radius:4px}
+.cal-day.observed{background:#fecaca;color:#991b1b;font-weight:700}
+.cal-day.bridge{background:#fef3c7;color:var(--pri-d);font-weight:600}
+
+/* Legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;font-size:12px;color:var(--sec)}
+.legend span{display:flex;align-items:center;gap:5px}
+.leg-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
+
+/* Holiday Cards */
+.hol-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.hol-card{background:var(--srf-alt);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .2s}
+.hol-card:hover{border-color:var(--pri-l)}
+.hol-card .hc-date{font-size:11px;color:var(--pri-d);font-weight:700;margin-bottom:2px}
+.hol-card .hc-name{font-size:15px;font-weight:700;margin-bottom:2px}
+.hol-card .hc-zh{font-size:12px;color:var(--sec);margin-bottom:6px}
+.hol-card .hc-tip{font-size:12px;padding:6px 10px;background:var(--pri-bg);border-radius:6px;color:var(--pri-d);border:1px solid #fde68a}
+.hol-card .hc-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;color:#fff;margin-top:6px}
+.badge-long{background:var(--ok)}
+.badge-bridge{background:var(--pri)}
+
+/* Optimizer */
+.opt-table{width:100%;border-collapse:collapse;font-size:13px}
+.opt-table thead th{padding:8px 10px;text-align:left;font-weight:600;color:var(--sec);border-bottom:2px solid var(--border)}
+.opt-table tbody td{padding:8px 10px;border-bottom:1px solid var(--border)}
+.eff-bar{display:inline-block;height:8px;border-radius:4px;background:var(--pri-l);vertical-align:middle;margin-left:6px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px}
+.field input{padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;width:120px;
+  background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(217,119,6,.12)}
+
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+@media(max-width:640px){.cal-grid{grid-template-columns:1fr 1fr}.hol-grid{grid-template-columns:1fr}.summary-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>SG Holiday Planner 2026</h1>
+    <p>新加坡 2026 公共假期规划器 — 长周末攻略 · 请假优化 · MOM Gazetted</p>
+  </header>
+
+  <!-- Summary -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📊</span>2026 Overview 概览</div>
+    <div class="summary-grid" id="summaryGrid"></div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📅</span>Annual Calendar 年历</div>
+    <div class="legend">
+      <span><span class="leg-dot" style="background:var(--hol)"></span>Public Holiday 公共假期</span>
+      <span><span class="leg-dot" style="background:#fecaca"></span>Observed 补假</span>
+      <span><span class="leg-dot" style="background:#fef3c7"></span>Bridge Day 拼假日</span>
+      <span><span class="leg-dot" style="background:#e2e8f0"></span>Weekend 周末</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <!-- Holiday Cards -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">🎉</span>Holidays & Long Weekends 假期详情</div>
+    <div class="hol-grid" id="holGrid"></div>
+  </div>
+
+  <!-- Optimizer -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">🧠</span>Leave Optimizer 请假优化器</div>
+    <div class="field">
+      <label>Annual Leave Balance 年假天数</label>
+      <input id="leaveBalance" type="number" min="0" max="30" value="14" onchange="renderOptimizer()" oninput="renderOptimizer()">
+    </div>
+    <div id="optimizerResult"></div>
+  </div>
+</div>
+
+<footer>
+  Source: MOM Singapore — Gazetted Public Holidays 2026 · Hari Raya dates subject to confirmation<br>
+  SmartTools — <a href="../index.html" style="color:var(--pri)">Home</a>
+</footer>
+
+<script>
+/* ═══ 2026 Holiday Data ═══ */
+const HOLIDAYS = [
+  {date:'2026-01-01',name:"New Year's Day",zh:'元旦',desc:'新年第一天',observed:null},
+  {date:'2026-02-17',name:'Chinese New Year',zh:'农历新年（初一）',desc:'春节，华人最重要的节日',observed:null},
+  {date:'2026-02-18',name:'Chinese New Year',zh:'农历新年（初二）',desc:'春节第二天',observed:null},
+  {date:'2026-03-21',name:'Hari Raya Puasa',zh:'开斋节',desc:'穆斯林斋月结束庆典',observed:'2026-03-23'},
+  {date:'2026-04-03',name:'Good Friday',zh:'耶稣受难日',desc:'基督教纪念耶稣受难',observed:null},
+  {date:'2026-05-01',name:'Labour Day',zh:'劳动节',desc:'国际劳动者节日',observed:null},
+  {date:'2026-05-27',name:'Hari Raya Haji',zh:'哈芝节',desc:'穆斯林朝觐节日',observed:null},
+  {date:'2026-05-31',name:'Vesak Day',zh:'卫塞节',desc:'纪念佛陀诞生、成道、涅槃',observed:'2026-06-01'},
+  {date:'2026-08-09',name:'National Day',zh:'国庆日',desc:'新加坡独立纪念日',observed:'2026-08-10'},
+  {date:'2026-11-08',name:'Deepavali',zh:'屠妖节',desc:'印度教光明战胜黑暗的节日',observed:'2026-11-09'},
+  {date:'2026-12-25',name:'Christmas Day',zh:'圣诞节',desc:'基督教纪念耶稣诞生',observed:null}
+];
+
+const LONG_WEEKENDS = [
+  {holiday:'New Year\'s Day',take:['2026-01-02'],off:['2026-01-01','2026-01-02','2026-01-03','2026-01-04'],days:4,leave:1,
+   tip:'请 1 天假（1月2日周五），获得 4 天长周末 (1-4 Jan)'},
+  {holiday:'Chinese New Year',take:['2026-02-16','2026-02-19','2026-02-20'],off:['2026-02-14','2026-02-15','2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-21','2026-02-22'],days:9,leave:3,
+   tip:'请 3 天假（2月16日周一+19-20日周四五），获得 9 天超长假期'},
+  {holiday:'Chinese New Year (short)',take:[],off:['2026-02-17','2026-02-18'],days:2,leave:0,
+   tip:'不请假也有 2 天 (Tue-Wed)，加上周末共 4 天'},
+  {holiday:'Hari Raya Puasa',take:['2026-03-23'],off:['2026-03-21','2026-03-22','2026-03-23'],days:3,leave:0,
+   tip:'周六假期 + 周日 + 周一补假 = 免请假 3 天长周末'},
+  {holiday:'Good Friday',take:[],off:['2026-04-03','2026-04-04','2026-04-05'],days:3,leave:0,
+   tip:'周五假期 + 周末 = 免请假 3 天长周末'},
+  {holiday:'Labour Day',take:[],off:['2026-05-01','2026-05-02','2026-05-03'],days:3,leave:0,
+   tip:'周五假期 + 周末 = 免请假 3 天长周末'},
+  {holiday:'Hari Raya Haji + Vesak',take:['2026-05-28','2026-05-29'],off:['2026-05-27','2026-05-28','2026-05-29','2026-05-30','2026-05-31','2026-06-01'],days:6,leave:2,
+   tip:'请 2 天假（5月28-29日），连休 6 天 (27 May – 1 Jun)'},
+  {holiday:'National Day',take:['2026-08-07'],off:['2026-08-07','2026-08-08','2026-08-09','2026-08-10'],days:4,leave:1,
+   tip:'请 1 天假（8月7日周五），获得 4 天长周末'},
+  {holiday:'Deepavali',take:['2026-11-10'],off:['2026-11-07','2026-11-08','2026-11-09','2026-11-10'],days:4,leave:1,
+   tip:'请 1 天假（11月10日周二），获得 4 天长周末 (Sat-Tue)'},
+  {holiday:'Christmas',take:['2026-12-24'],off:['2026-12-24','2026-12-25','2026-12-26','2026-12-27'],days:4,leave:1,
+   tip:'请 1 天假（12月24日周四），获得 4 天长周末'}
+];
+
+/* ═══ Build Sets ═══ */
+const holDates = new Set();
+const obsDates = new Set();
+const bridgeDates = new Set();
+
+HOLIDAYS.forEach(h => {
+  holDates.add(h.date);
+  if (h.observed) obsDates.add(h.observed);
+});
+LONG_WEEKENDS.forEach(lw => lw.take.forEach(d => bridgeDates.add(d)));
+
+function isWeekend(d) { const day = d.getDay(); return day === 0 || day === 6; }
+function dateStr(d) { return d.toISOString().slice(0, 10); }
+
+/* ═══ Render ═══ */
+function renderAll() {
+  renderSummary();
+  renderCalendar();
+  renderHolidayCards();
+  renderOptimizer();
+}
+
+function renderSummary() {
+  const totalPH = 11;
+  const freeObs = [...obsDates].filter(d => !holDates.has(d)).length;
+  const totalDaysOff = totalPH + freeObs;
+  const longWeekends = LONG_WEEKENDS.filter(lw => lw.leave === 0).length;
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="sum-card"><div class="sum-val">${totalPH}</div><div class="sum-lbl">Public Holidays 公共假期</div></div>
+    <div class="sum-card"><div class="sum-val">${freeObs}</div><div class="sum-lbl">Observed Mondays 补假</div></div>
+    <div class="sum-card"><div class="sum-val">${longWeekends}</div><div class="sum-lbl">Free Long Weekends 免请假长周末</div></div>
+    <div class="sum-card"><div class="sum-val">6</div><div class="sum-lbl">Best Strategies 最优拼假方案</div></div>`;
+}
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const today = dateStr(new Date());
+
+  let html = '';
+  for (let m = 0; m < 12; m++) {
+    const first = new Date(2026, m, 1);
+    const lastDay = new Date(2026, m + 1, 0).getDate();
+    const startDay = first.getDay();
+
+    let daysHtml = '';
+    for (let i = 0; i < startDay; i++) daysHtml += '<div class="cal-day empty"></div>';
+    for (let d = 1; d <= lastDay; d++) {
+      const ds = `2026-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dt = new Date(2026, m, d);
+      let cls = 'cal-day';
+      if (holDates.has(ds)) cls += ' holiday';
+      else if (obsDates.has(ds)) cls += ' observed';
+      else if (bridgeDates.has(ds)) cls += ' bridge';
+      else if (isWeekend(dt)) cls += ' weekend';
+      if (ds === today) cls += ' today';
+      daysHtml += `<div class="${cls}" title="${ds}">${d}</div>`;
+    }
+
+    html += `<div class="cal-month">
+      <h4>${months[m]}</h4>
+      <div class="cal-header">${days.map(d => `<span>${d}</span>`).join('')}</div>
+      <div class="cal-days">${daysHtml}</div>
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function renderHolidayCards() {
+  document.getElementById('holGrid').innerHTML = HOLIDAYS.map(h => {
+    const dt = new Date(h.date);
+    const dayName = dt.toLocaleDateString('en-US', { weekday: 'long' });
+    const dateDisplay = dt.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    const lw = LONG_WEEKENDS.find(l => l.holiday === h.name || l.holiday === h.name + ' (short)');
+    let badges = '';
+    if (h.observed) badges += `<span class="hc-badge" style="background:#f59e0b">Mon observed 周一补假</span> `;
+    if (lw && lw.leave === 0 && lw.days >= 3) badges += `<span class="hc-badge badge-long">${lw.days}-day free 免请假</span> `;
+    const tipHtml = lw ? `<div class="hc-tip">💡 ${lw.tip}</div>` : '';
+
+    return `<div class="hol-card">
+      <div class="hc-date">${dateDisplay} · ${dayName}</div>
+      <div class="hc-name">${h.name}</div>
+      <div class="hc-zh">${h.zh} — ${h.desc}</div>
+      ${tipHtml}
+      ${badges ? `<div style="margin-top:6px">${badges}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderOptimizer() {
+  const balance = parseInt(document.getElementById('leaveBalance').value) || 0;
+  const strategies = LONG_WEEKENDS
+    .filter(lw => lw.leave > 0)
+    .map(lw => ({ ...lw, efficiency: lw.days / lw.leave }))
+    .sort((a, b) => b.efficiency - a.efficiency);
+
+  let usedLeave = 0;
+  const selected = [];
+  for (const s of strategies) {
+    if (usedLeave + s.leave <= balance) {
+      selected.push(s);
+      usedLeave += s.leave;
+    }
+  }
+
+  const totalDaysOff = selected.reduce((s, x) => s + x.days, 0);
+  const maxEff = Math.max(...strategies.map(s => s.efficiency), 1);
+
+  document.getElementById('optimizerResult').innerHTML = `
+    <div style="padding:12px 16px;background:var(--pri-bg);border-radius:8px;margin-bottom:14px;font-size:13px;color:var(--pri-d);border:1px solid #fde68a">
+      使用 <b>${usedLeave}</b> 天年假，可获得 <b>${totalDaysOff}</b> 天假期（效率 ${usedLeave > 0 ? (totalDaysOff/usedLeave).toFixed(1) : '∞'}x）· 剩余 ${balance - usedLeave} 天年假
+    </div>
+    <table class="opt-table">
+      <thead><tr><th>Holiday 假期</th><th>Leave 请假</th><th>Total Off 总休息</th><th>Efficiency 效率</th><th>Recommended</th></tr></thead>
+      <tbody>${strategies.map(s => {
+        const isSelected = selected.includes(s);
+        const barW = Math.round(s.efficiency / maxEff * 60);
+        return `<tr style="${isSelected ? 'background:#fffbeb' : ''}">
+          <td><b>${s.holiday}</b></td>
+          <td>${s.leave} day${s.leave > 1 ? 's' : ''}</td>
+          <td><b>${s.days} days</b></td>
+          <td>${s.efficiency.toFixed(1)}x <span class="eff-bar" style="width:${barW}px"></span></td>
+          <td>${isSelected ? '<span style="color:var(--ok);font-weight:700">✓ Take it</span>' : '<span style="color:var(--tri)">—</span>'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    <div style="margin-top:12px;font-size:12px;color:var(--sec)">
+      Strategies ranked by efficiency (days off per leave day). Recommended picks maximize total days off within your leave balance.
+    </div>`;
+}
+
+renderAll();
+</script>
+</body>
+</html>
