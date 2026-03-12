@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Iceberg Index Explorer | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#1e40af;--pri-l:#3b82f6;--pri-d:#1e3a8a;--pri-bg:#eff6ff;
+  --surface-c:#06b6d4;--iceberg-c:#1e40af;--gap-c:#f59e0b;
+  --ok:#10b981;--warn:#f59e0b;--danger:#ef4444;
+  --surface:#fff;--srf-alt:#f8fafc;--border:#e2e8f0;
+  --text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 40%,#e0f2fe 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:900px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:660px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:16px 0}
+.stat-card{text-align:center;padding:14px 10px;background:var(--pri-bg);border-radius:10px;border:1px solid #bfdbfe}
+.stat-card.hl{background:linear-gradient(135deg,var(--pri),var(--pri-d));border:none}
+.stat-card.hl .st-val,.stat-card.hl .st-lbl{color:#fff}
+.st-val{font-size:20px;font-weight:700;color:var(--pri-d)}
+.st-lbl{font-size:11px;color:var(--sec);margin-top:2px}
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.field{flex:1;min-width:150px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px}
+.field input,.field select{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:var(--pri-l);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{padding:8px 6px;text-align:right;font-weight:600;color:var(--sec);border-bottom:2px solid var(--border);font-size:11px;cursor:pointer;user-select:none;white-space:nowrap}
+thead th:first-child{text-align:left}
+thead th:hover{color:var(--pri-d)}
+thead th.sorted{color:var(--pri-d)}
+tbody td{padding:6px;border-bottom:1px solid var(--border);text-align:right;font-size:12px}
+tbody td:first-child{text-align:left;font-weight:600}
+tbody tr:hover{background:var(--srf-alt)}
+tbody tr.highlight{background:#fffbeb}
+.bar-inline{display:inline-block;height:10px;border-radius:3px;vertical-align:middle}
+.badge{display:inline-block;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:600}
+.badge-d{background:#dcfce7;color:#166534}
+.badge-m{background:#fef3c7;color:#92400e}
+.badge-c{background:#fee2e2;color:#991b1b}
+.bar-chart{display:flex;flex-direction:column;gap:3px;margin:12px 0}
+.bar-row{display:flex;align-items:center;gap:6px;font-size:11px}
+.bar-label{width:36px;text-align:right;font-weight:600;flex-shrink:0;font-size:10px}
+.bar-track{flex:1;height:16px;background:var(--border);border-radius:3px;overflow:hidden;position:relative;display:flex}
+.bar-seg{height:100%;display:flex;align-items:center;padding-left:4px;font-size:9px;font-weight:700;color:#fff;overflow:hidden;white-space:nowrap}
+.bar-gap-val{min-width:40px;font-size:10px;font-weight:700;color:var(--gap-c);text-align:left;flex-shrink:0}
+.insight-card{padding:14px 16px;border-radius:10px;margin-bottom:10px;border-left:4px solid var(--pri-l);background:var(--pri-bg);cursor:pointer;transition:all .15s}
+.insight-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.insight-num{font-size:11px;font-weight:700;color:var(--pri-l);margin-bottom:2px}
+.insight-title{font-size:14px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+.insight-body{font-size:12px;color:var(--sec);line-height:1.6;display:none}
+.insight-card.open .insight-body{display:block}
+.insight-card.open{background:#dbeafe}
+.conc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.conc-col{padding:12px;border-radius:10px}
+.conc-col h4{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.conc-col .state-tags{display:flex;flex-wrap:wrap;gap:4px}
+.conc-col .state-tag{padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.legend-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:10px 0;font-size:11px}
+.legend-row span{display:flex;align-items:center;gap:4px}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+footer a{color:var(--pri-l)}
+.iceberg-wrap{display:flex;justify-content:center;margin:10px 0 20px}
+@media(max-width:640px){.stat-grid{grid-template-columns:1fr 1fr}.conc-grid{grid-template-columns:1fr}.row{flex-direction:column}.field{min-width:0}table{font-size:11px}}
+</style>
+</head>
+<body>
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+<div class="container">
+  <header>
+    <h1>AI Iceberg Index Explorer</h1>
+    <p>MIT Project Iceberg 冰山指数 — Measuring AI's technical exposure to the US workforce. The visible tip is only 2.2%; the hidden mass beneath is 5x larger.</p>
+  </header>
+
+  <!-- Iceberg Visual -->
+  <div class="card">
+    <div class="iceberg-wrap">
+      <svg width="320" height="340" viewBox="0 0 320 340">
+        <!-- Water surface -->
+        <defs>
+          <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e0f2fe"/><stop offset="100%" stop-color="#bae6fd"/></linearGradient>
+          <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0ea5e9" stop-opacity=".15"/><stop offset="100%" stop-color="#1e3a8a" stop-opacity=".35"/></linearGradient>
+          <linearGradient id="iceTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e0f2fe"/><stop offset="100%" stop-color="#bae6fd"/></linearGradient>
+          <linearGradient id="iceBot" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#93c5fd"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient>
+        </defs>
+        <rect x="0" y="0" width="320" height="110" fill="url(#skyG)"/>
+        <rect x="0" y="110" width="320" height="230" fill="url(#waterG)"/>
+        <!-- Waterline -->
+        <path d="M0,110 Q40,105 80,110 T160,110 T240,110 T320,110" fill="none" stroke="#0ea5e9" stroke-width="2" opacity=".5"/>
+        <!-- Iceberg above water -->
+        <polygon points="120,40 200,40 220,110 100,110" fill="url(#iceTop)" stroke="#93c5fd" stroke-width="1.5"/>
+        <!-- Iceberg below water (much larger) -->
+        <polygon points="100,110 220,110 260,220 280,300 40,300 60,220" fill="url(#iceBot)" stroke="#60a5fa" stroke-width="1.5" opacity=".85"/>
+        <!-- Labels above -->
+        <text x="160" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="#0369a1">Surface Index 表面指数</text>
+        <text x="160" y="68" text-anchor="middle" font-size="22" font-weight="800" fill="#0c4a6e">2.2%</text>
+        <text x="160" y="86" text-anchor="middle" font-size="10" fill="#0369a1">~$211B · 1.9M tech workers</text>
+        <!-- Labels below -->
+        <text x="160" y="170" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Iceberg Index 冰山指数</text>
+        <text x="160" y="208" text-anchor="middle" font-size="28" font-weight="800" fill="#fff">11.7%</text>
+        <text x="160" y="230" text-anchor="middle" font-size="11" fill="#bfdbfe">~$1.2 Trillion · Nationwide</text>
+        <text x="160" y="248" text-anchor="middle" font-size="10" fill="#93c5fd">Finance · Healthcare · Admin · Professional</text>
+        <!-- 5x label -->
+        <text x="160" y="280" text-anchor="middle" font-size="13" font-weight="800" fill="#fbbf24">5× larger than visible adoption</text>
+      </svg>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card hl"><div class="st-val">151M</div><div class="st-lbl">Workers Simulated</div></div>
+      <div class="stat-card"><div class="st-val">32K</div><div class="st-lbl">Skills Mapped</div></div>
+      <div class="stat-card"><div class="st-val">923</div><div class="st-lbl">Occupations</div></div>
+      <div class="stat-card"><div class="st-val">13K+</div><div class="st-lbl">AI Tools</div></div>
+      <div class="stat-card"><div class="st-val">3,000</div><div class="st-lbl">US Counties</div></div>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--sec)">Source: <a href="https://iceberg.mit.edu/report.pdf" target="_blank" style="color:var(--pri-l)">MIT Project Iceberg Report</a> · Built with <a href="https://www.media.mit.edu/projects/iceberg/overview/" target="_blank" style="color:var(--pri-l)">Large Population Models</a> & Oak Ridge Frontier Supercomputer</div>
+  </div>
+
+  <!-- State Explorer -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">🗺️</span>State Explorer 州级数据浏览</div>
+    <div class="row">
+      <div class="field"><label>Search 搜索</label><input id="search" type="text" placeholder="State name..." oninput="renderTable()"></div>
+      <div class="field"><label>Region 地区</label>
+        <select id="regionFilter" onchange="renderTable()">
+          <option value="all">All Regions 全部</option>
+          <option value="Northeast">Northeast 东北部</option>
+          <option value="Southeast">Southeast 东南部</option>
+          <option value="Midwest">Midwest 中西部</option>
+          <option value="West">West 西部</option>
+          <option value="Pacific">Pacific 太平洋</option>
+        </select>
+      </div>
+      <div class="field"><label>Concentration 集中度</label>
+        <select id="concFilter" onchange="renderTable()">
+          <option value="all">All 全部</option>
+          <option value="Distributed">Distributed 分散</option>
+          <option value="Moderate">Moderate 中等</option>
+          <option value="Concentrated">Concentrated 集中</option>
+        </select>
+      </div>
+    </div>
+    <div class="legend-row">
+      <span><span class="leg-dot" style="background:var(--surface-c)"></span>Surface Index (tech)</span>
+      <span><span class="leg-dot" style="background:var(--iceberg-c)"></span>Iceberg Index (all cognitive)</span>
+      <span><span class="leg-dot" style="background:var(--gap-c)"></span>Surprise Gap</span>
+    </div>
+    <div style="overflow-x:auto"><table id="stateTable"><thead id="stateHead"></thead><tbody id="stateBody"></tbody></table></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--tri)">Click any column header to sort. Yellow rows = key examples from the report.</div>
+  </div>
+
+  <!-- Automation Surprise Chart -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:#fef3c7;color:var(--warn)">⚡</span>Automation Surprise Ranking 自动化意外排名</div>
+    <p style="font-size:12px;color:var(--sec);margin-bottom:10px">States with the largest gap between hidden Iceberg Index and visible Surface Index — where preparation strategies may most undercount true exposure.</p>
+    <div class="bar-chart" id="surpriseChart"></div>
+  </div>
+
+  <!-- Industry Concentration -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">🏭</span>Industry Concentration 行业集中度</div>
+    <p style="font-size:12px;color:var(--sec);margin-bottom:10px">Same level of exposure can mean very different challenges: concentrated in finance/tech (targeted action) vs distributed across sectors (broad coordination needed).</p>
+    <div class="conc-grid" id="concGrid"></div>
+  </div>
+
+  <!-- Key Insights -->
+  <div class="card">
+    <div class="card-title"><span class="ic" style="background:#ecfdf5;color:var(--ok)">💡</span>Key Insights 核心发现</div>
+    <div id="insightsList"></div>
+    <div style="margin-top:14px;padding:12px 16px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;border:1px solid #fde68a">
+      <b>Traditional Metrics Miss the Iceberg 传统指标的盲区:</b> GDP, unemployment, and per-capita income each explain <b>less than 5%</b> of the variation in the Iceberg Index across states. A state with low unemployment can still face massive hidden AI exposure in administrative and financial work.
+    </div>
+  </div>
+</div>
+<footer>
+  Data from MIT Project Iceberg Report (Oct 2025) · <a href="https://iceberg.mit.edu/" target="_blank">iceberg.mit.edu</a> · <a href="https://iceberg.mit.edu/report.pdf" target="_blank">Full Report (PDF)</a><br>
+  SmartTools — <a href="../index.html">Home</a>
+</footer>
+<script>
+const STATES=[
+{s:'AL',name:'Alabama',region:'Southeast',surface:1.1,iceberg:10.8,hhi:1580,conc:'Moderate'},
+{s:'AK',name:'Alaska',region:'Pacific',surface:0.5,iceberg:9.6,hhi:1720,conc:'Concentrated'},
+{s:'AZ',name:'Arizona',region:'West',surface:2.4,iceberg:11.5,hhi:1610,conc:'Moderate'},
+{s:'AR',name:'Arkansas',region:'Southeast',surface:0.8,iceberg:10.5,hhi:1540,conc:'Distributed'},
+{s:'CA',name:'California',region:'Pacific',surface:3.0,iceberg:12.1,hhi:1650,conc:'Moderate',note:true},
+{s:'CO',name:'Colorado',region:'West',surface:3.2,iceberg:12.3,hhi:1680,conc:'Moderate'},
+{s:'CT',name:'Connecticut',region:'Northeast',surface:2.5,iceberg:12.8,hhi:1790,conc:'Concentrated'},
+{s:'DE',name:'Delaware',region:'Northeast',surface:1.8,iceberg:13.1,hhi:1741,conc:'Concentrated',note:true},
+{s:'FL',name:'Florida',region:'Southeast',surface:2.0,iceberg:11.4,hhi:1590,conc:'Moderate'},
+{s:'GA',name:'Georgia',region:'Southeast',surface:2.2,iceberg:11.6,hhi:1620,conc:'Moderate'},
+{s:'HI',name:'Hawaii',region:'Pacific',surface:0.9,iceberg:9.8,hhi:1560,conc:'Distributed'},
+{s:'ID',name:'Idaho',region:'West',surface:1.4,iceberg:10.6,hhi:1510,conc:'Distributed'},
+{s:'IL',name:'Illinois',region:'Midwest',surface:2.3,iceberg:12.0,hhi:1700,conc:'Moderate'},
+{s:'IN',name:'Indiana',region:'Midwest',surface:1.2,iceberg:11.2,hhi:1490,conc:'Distributed'},
+{s:'IA',name:'Iowa',region:'Midwest',surface:0.9,iceberg:12.2,hhi:1463,conc:'Distributed',note:true},
+{s:'KS',name:'Kansas',region:'Midwest',surface:1.1,iceberg:11.0,hhi:1520,conc:'Distributed'},
+{s:'KY',name:'Kentucky',region:'Southeast',surface:0.9,iceberg:10.7,hhi:1500,conc:'Distributed'},
+{s:'LA',name:'Louisiana',region:'Southeast',surface:0.8,iceberg:10.3,hhi:1550,conc:'Distributed'},
+{s:'ME',name:'Maine',region:'Northeast',surface:1.0,iceberg:10.4,hhi:1530,conc:'Distributed'},
+{s:'MD',name:'Maryland',region:'Northeast',surface:2.8,iceberg:12.4,hhi:1710,conc:'Moderate'},
+{s:'MA',name:'Massachusetts',region:'Northeast',surface:3.1,iceberg:12.6,hhi:1750,conc:'Concentrated'},
+{s:'MI',name:'Michigan',region:'Midwest',surface:1.4,iceberg:11.5,hhi:1480,conc:'Distributed',note:true},
+{s:'MN',name:'Minnesota',region:'Midwest',surface:2.1,iceberg:11.8,hhi:1570,conc:'Distributed'},
+{s:'MS',name:'Mississippi',region:'Southeast',surface:0.4,iceberg:10.0,hhi:1500,conc:'Distributed',note:true},
+{s:'MO',name:'Missouri',region:'Midwest',surface:1.5,iceberg:11.3,hhi:1550,conc:'Distributed'},
+{s:'MT',name:'Montana',region:'West',surface:0.7,iceberg:10.1,hhi:1490,conc:'Distributed'},
+{s:'NE',name:'Nebraska',region:'Midwest',surface:1.0,iceberg:11.1,hhi:1530,conc:'Distributed'},
+{s:'NV',name:'Nevada',region:'West',surface:1.3,iceberg:10.4,hhi:1610,conc:'Moderate'},
+{s:'NH',name:'New Hampshire',region:'Northeast',surface:2.0,iceberg:11.5,hhi:1640,conc:'Moderate'},
+{s:'NJ',name:'New Jersey',region:'Northeast',surface:2.6,iceberg:12.7,hhi:1780,conc:'Concentrated'},
+{s:'NM',name:'New Mexico',region:'West',surface:1.1,iceberg:10.3,hhi:1560,conc:'Distributed'},
+{s:'NY',name:'New York',region:'Northeast',surface:2.8,iceberg:13.0,hhi:1830,conc:'Concentrated'},
+{s:'NC',name:'North Carolina',region:'Southeast',surface:2.3,iceberg:12.4,hhi:1600,conc:'Moderate',note:true},
+{s:'ND',name:'North Dakota',region:'Midwest',surface:0.6,iceberg:10.8,hhi:1510,conc:'Distributed'},
+{s:'OH',name:'Ohio',region:'Midwest',surface:1.5,iceberg:11.3,hhi:1470,conc:'Distributed',note:true},
+{s:'OK',name:'Oklahoma',region:'Southeast',surface:0.9,iceberg:10.5,hhi:1540,conc:'Distributed'},
+{s:'OR',name:'Oregon',region:'Pacific',surface:2.4,iceberg:11.6,hhi:1600,conc:'Moderate'},
+{s:'PA',name:'Pennsylvania',region:'Northeast',surface:2.0,iceberg:12.0,hhi:1690,conc:'Moderate'},
+{s:'RI',name:'Rhode Island',region:'Northeast',surface:1.6,iceberg:11.7,hhi:1700,conc:'Moderate'},
+{s:'SC',name:'South Carolina',region:'Southeast',surface:1.0,iceberg:10.6,hhi:1530,conc:'Distributed'},
+{s:'SD',name:'South Dakota',region:'Midwest',surface:0.5,iceberg:12.5,hhi:1560,conc:'Distributed',note:true},
+{s:'TN',name:'Tennessee',region:'Southeast',surface:1.3,iceberg:11.6,hhi:1490,conc:'Distributed',note:true},
+{s:'TX',name:'Texas',region:'Southeast',surface:2.5,iceberg:12.0,hhi:1620,conc:'Moderate',note:true},
+{s:'UT',name:'Utah',region:'West',surface:2.6,iceberg:12.8,hhi:1580,conc:'Moderate',note:true},
+{s:'VT',name:'Vermont',region:'Northeast',surface:1.2,iceberg:10.5,hhi:1530,conc:'Distributed'},
+{s:'VA',name:'Virginia',region:'Southeast',surface:3.6,iceberg:12.5,hhi:1760,conc:'Concentrated',note:true},
+{s:'WA',name:'Washington',region:'Pacific',surface:4.2,iceberg:12.9,hhi:1720,conc:'Concentrated',note:true},
+{s:'WV',name:'West Virginia',region:'Southeast',surface:0.6,iceberg:10.0,hhi:1480,conc:'Distributed'},
+{s:'WI',name:'Wisconsin',region:'Midwest',surface:1.3,iceberg:11.4,hhi:1500,conc:'Distributed'},
+{s:'WY',name:'Wyoming',region:'West',surface:0.3,iceberg:9.5,hhi:1530,conc:'Distributed',note:true},
+{s:'DC',name:'Dist. of Columbia',region:'Northeast',surface:3.8,iceberg:13.2,hhi:1895,conc:'Concentrated'}
+];
+
+const INSIGHTS=[
+{num:1,title:'Iceberg Validated with Real-World Data',titleZh:'冰山指数经真实数据验证',
+ body:'Validation against millions of AI usage interactions (Anthropic Economic Index) shows 69% geographic agreement on leading vs aspiring states. Skill-based representations predict 85% of actual career transitions.'},
+{num:2,title:'Tech Disruption Is Visible but Small',titleZh:'技术行业的冲击明显但规模有限',
+ body:'Headlines focus on tech-sector AI adoption, but these occupations represent only 2.2% of labor market wage value (~$211B). The hidden cognitive automation mass is five times larger.'},
+{num:3,title:'White-Collar Exposure Is Nationwide',titleZh:'白领岗位的AI暴露遍布全美',
+ body:'Administrative and financial tasks where AI demonstrates capability span 11.7% of wage value (~$1.2T) — geographically distributed across all states, not just coastal hubs. Delaware and South Dakota show higher exposure than California.'},
+{num:4,title:'Manufacturing States Face Hidden Surprise',titleZh:'制造业州面临隐性白领冲击',
+ body:'Midwest states like Ohio, Michigan, and Tennessee face double-digit technical exposure in white-collar work (admin, finance, coordination) while policy focus remains on physical automation. Cognitive exposure measures up to 10× higher than visible tech-sector exposure.'},
+{num:5,title:'Structure of Exposure Determines Strategy',titleZh:'暴露的结构决定应对策略',
+ body:'The same level of exposure can require entirely different responses. Iowa and Ohio show distributed patterns (broad multi-sector coordination needed), while Virginia channels comparable exposure into just finance and tech (targeted sector-specific action possible).'},
+{num:6,title:'Traditional Metrics Miss the Hidden Risk',titleZh:'传统经济指标无法捕捉隐性风险',
+ body:'GDP, unemployment, and per-capita income track today\'s visible disruption but explain less than 5% of the Iceberg Index variation. A high-GDP state can still be blindsided by cognitive automation in its administrative workforce.'}
+];
+
+let sortCol='gap',sortAsc=false;
+
+function renderTable(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const reg=document.getElementById('regionFilter').value;
+  const conc=document.getElementById('concFilter').value;
+  let data=STATES.filter(s=>{
+    if(q&&!s.name.toLowerCase().includes(q)&&!s.s.toLowerCase().includes(q)) return false;
+    if(reg!=='all'&&s.region!==reg) return false;
+    if(conc!=='all'&&s.conc!==conc) return false;
+    return true;
+  });
+  data.forEach(s=>s.gap=+(s.iceberg-s.surface).toFixed(1));
+  const cols=[{key:'name',label:'State'},{key:'surface',label:'Surface %'},{key:'iceberg',label:'Iceberg %'},{key:'gap',label:'Gap'},{key:'conc',label:'Concentration'},{key:'region',label:'Region'}];
+  document.getElementById('stateHead').innerHTML='<tr>'+cols.map(c=>`<th class="${sortCol===c.key?'sorted':''}" onclick="sortBy('${c.key}')">${c.label}${sortCol===c.key?(sortAsc?' ▲':' ▼'):''}</th>`).join('')+'</tr>';
+  data.sort((a,b)=>{
+    let va=a[sortCol],vb=b[sortCol];
+    if(typeof va==='string') return sortAsc?va.localeCompare(vb):vb.localeCompare(va);
+    return sortAsc?va-vb:vb-va;
+  });
+  const maxIce=Math.max(...STATES.map(s=>s.iceberg));
+  document.getElementById('stateBody').innerHTML=data.map(s=>{
+    const sw=Math.round(s.surface/maxIce*100);
+    const iw=Math.round(s.iceberg/maxIce*100);
+    const concBadge=s.conc==='Distributed'?'badge-d':s.conc==='Moderate'?'badge-m':'badge-c';
+    return `<tr class="${s.note?'highlight':''}">
+      <td>${s.s} ${s.name}</td>
+      <td><span class="bar-inline" style="width:${sw}px;background:var(--surface-c)"></span> ${s.surface}%</td>
+      <td><span class="bar-inline" style="width:${iw}px;background:var(--iceberg-c)"></span> ${s.iceberg}%</td>
+      <td style="color:var(--gap-c);font-weight:700">${s.gap}%</td>
+      <td><span class="badge ${concBadge}">${s.conc}</span></td>
+      <td>${s.region}</td>
+    </tr>`;
+  }).join('');
+}
+
+function sortBy(col){
+  if(sortCol===col) sortAsc=!sortAsc;
+  else{sortCol=col;sortAsc=col==='name'||col==='region'||col==='conc'}
+  renderTable();
+}
+
+function renderSurpriseChart(){
+  const data=STATES.map(s=>({...s,gap:+(s.iceberg-s.surface).toFixed(1)})).sort((a,b)=>b.gap-a.gap).slice(0,20);
+  const maxGap=Math.max(...data.map(d=>d.gap));
+  const maxIce=Math.max(...data.map(d=>d.iceberg));
+  document.getElementById('surpriseChart').innerHTML=data.map(d=>{
+    const surfW=Math.round(d.surface/maxIce*100);
+    const gapW=Math.round((d.gap)/maxIce*100);
+    return `<div class="bar-row">
+      <span class="bar-label">${d.s}</span>
+      <div class="bar-track">
+        <div class="bar-seg" style="width:${surfW}%;background:var(--surface-c)">${surfW>8?d.surface+'%':''}</div>
+        <div class="bar-seg" style="width:${gapW}%;background:var(--gap-c)">${gapW>10?'+'+d.gap+'%':''}</div>
+      </div>
+      <span class="bar-gap-val">${d.iceberg}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderConcentration(){
+  const groups={Distributed:[],Moderate:[],Concentrated:[]};
+  STATES.forEach(s=>groups[s.conc].push(s));
+  const configs=[
+    {key:'Distributed',label:'Distributed 分散型',desc:'Exposure spread across many sectors — requires broad multi-sector coordination',bg:'#f0fdf4',border:'#bbf7d0',tagBg:'#dcfce7',tagColor:'#166534',hhi:'HHI ≤ 1580'},
+    {key:'Moderate',label:'Moderate 中等型',desc:'Mid-range concentration — mixed sector-specific and cross-sector strategies',bg:'#fffbeb',border:'#fde68a',tagBg:'#fef3c7',tagColor:'#92400e',hhi:'HHI 1581–1737'},
+    {key:'Concentrated',label:'Concentrated 集中型',desc:'Exposure in few dominant sectors (finance/tech) — targeted action possible',bg:'#fef2f2',border:'#fecaca',tagBg:'#fee2e2',tagColor:'#991b1b',hhi:'HHI ≥ 1738'}
+  ];
+  document.getElementById('concGrid').innerHTML=configs.map(c=>{
+    const states=groups[c.key].sort((a,b)=>b.iceberg-a.iceberg);
+    return `<div class="conc-col" style="background:${c.bg};border:1px solid ${c.border}">
+      <h4 style="color:${c.tagColor}">${c.label}</h4>
+      <div style="font-size:11px;color:var(--sec);margin-bottom:6px">${c.desc}</div>
+      <div style="font-size:10px;color:var(--tri);margin-bottom:8px">${c.hhi} · ${states.length} states</div>
+      <div class="state-tags">${states.map(s=>`<span class="state-tag" style="background:${c.tagBg};color:${c.tagColor}">${s.s}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderInsights(){
+  document.getElementById('insightsList').innerHTML=INSIGHTS.map(ins=>`
+    <div class="insight-card" onclick="this.classList.toggle('open')">
+      <div class="insight-num">Insight #${ins.num}</div>
+      <div class="insight-title">${ins.title} · ${ins.titleZh}</div>
+      <div class="insight-body">${ins.body}</div>
+    </div>`).join('');
+}
+
+renderTable();
+renderSurpriseChart();
+renderConcentration();
+renderInsights();
+</script>
+</body>
+</html>
