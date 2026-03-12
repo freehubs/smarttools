@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SG MediShield Life Calculator | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#2563eb;--pri-l:#60a5fa;--pri-d:#1d4ed8;--pri-bg:#eff6ff;
+  --ok:#10b981;--warn:#f59e0b;--danger:#ef4444;
+  --surface:#fff;--srf-alt:#f8fafc;--border:#e2e8f0;
+  --text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 50%,#e0f2fe 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:820px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:620px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.card-title .arrow{margin-left:auto;font-size:12px;color:var(--tri);transition:transform .2s}
+.card-title.open .arrow{transform:rotate(180deg)}
+.card-body{overflow:hidden;transition:max-height .3s ease}
+.card-body.collapsed{max-height:0 !important}
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.field{flex:1;min-width:160px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.hint{font-size:11px;color:var(--tri);margin-top:3px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.sum-card{text-align:center;padding:14px 12px;background:var(--pri-bg);border-radius:10px;border:1px solid #bfdbfe}
+.sum-card.hl{background:linear-gradient(135deg,var(--pri),var(--pri-d));border:none}
+.sum-card.hl .sum-val,.sum-card.hl .sum-lbl{color:#fff}
+.sum-card.warn{background:#fef2f2;border-color:#fecaca}
+.sum-card.warn .sum-val{color:var(--danger)}
+.sum-val{font-size:20px;font-weight:700;color:var(--pri-d)}
+.sum-lbl{font-size:11px;color:var(--sec);margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+thead th{padding:8px;text-align:right;font-weight:600;color:var(--sec);border-bottom:2px solid var(--border);font-size:11px}
+thead th:first-child{text-align:left}
+tbody td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}
+tbody td:first-child{text-align:left;font-weight:600}
+tbody tr:hover{background:var(--srf-alt)}
+.bar-chart{display:flex;flex-direction:column;gap:4px;margin:12px 0}
+.bar-row{display:flex;align-items:center;gap:8px;font-size:11px}
+.bar-label{width:55px;text-align:right;font-weight:600;flex-shrink:0}
+.bar-track{flex:1;height:20px;background:var(--border);border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px;font-size:10px;font-weight:700;color:#fff;transition:width .4s ease}
+.bar-row.active .bar-fill{box-shadow:0 0 0 2px var(--pri)}
+.bar-row.active .bar-label{color:var(--pri-d)}
+.info-box{padding:12px 16px;border-radius:8px;font-size:12px;margin-top:12px;border:1px solid}
+.info-box.blue{background:var(--pri-bg);border-color:#bfdbfe;color:var(--pri-d)}
+.info-box.amber{background:#fffbeb;border-color:#fde68a;color:#92400e}
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+@media(max-width:640px){.summary-grid{grid-template-columns:1fr 1fr}.row{flex-direction:column}.field{min-width:0}}
+</style>
+</head>
+<body>
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:820px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+<div class="container">
+  <header>
+    <h1>MediShield Life Calculator</h1>
+    <p>新加坡终身健保计算器 — Premium Lookup · Claim Estimation · Deductible & Co-Insurance · Effective Apr 2025</p>
+  </header>
+
+  <div class="card">
+    <div class="card-title open" onclick="toggleCard(this)">
+      <span class="ic" style="background:var(--pri-bg);color:var(--pri)">👤</span>Personal Info 个人信息<span class="arrow">▼</span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field"><label>Age 年龄</label><input id="age" type="number" min="1" max="100" value="35" onchange="compute()" oninput="compute()"></div>
+        <div class="field"><label>Citizenship 身份</label>
+          <select id="cit" onchange="compute()"><option value="SC">Singapore Citizen 公民</option><option value="PR">Permanent Resident 永久居民</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title open" onclick="toggleCard(this)">
+      <span class="ic" style="background:var(--pri-bg);color:var(--pri)">🏥</span>Hospitalisation Scenario 住院场景<span class="arrow">▼</span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field"><label>Ward Class 病房等级</label>
+          <select id="ward" onchange="compute()">
+            <option value="C">Class C 丙级 (subsidised)</option>
+            <option value="B2" selected>Class B2 乙二级 (subsidised)</option>
+            <option value="B1">Class B1 乙一级</option>
+            <option value="A">Class A 甲级</option>
+            <option value="PVT">Private 私立</option>
+          </select>
+          <div class="hint">MediShield Life covers Class B2/C. Higher wards require Integrated Shield Plan.</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Normal Ward Days 普通病房天数</label><input id="wardDays" type="number" min="0" max="60" value="3" onchange="compute()" oninput="compute()"></div>
+        <div class="field"><label>ICU Days 加护病房天数</label><input id="icuDays" type="number" min="0" max="30" value="0" onchange="compute()" oninput="compute()"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Total Hospital Bill 总账单 (SGD)</label>
+          <input id="bill" type="text" inputmode="numeric" value="5,000" oninput="fmtInput(this);compute()">
+          <div class="hint">Enter actual bill or use estimate based on ward days above</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="card-title" style="cursor:default"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">📊</span>Claim Estimation 理赔估算</div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div id="claimDetail"></div>
+  </div>
+
+  <!-- Premium -->
+  <div class="card">
+    <div class="card-title" style="cursor:default"><span class="ic" style="background:var(--pri-bg);color:var(--pri)">💰</span>Annual Premium 年度保费</div>
+    <div id="premiumSection"></div>
+    <h4 style="font-size:14px;color:var(--sec);margin:16px 0 8px">Premium by Age 保费随年龄变化</h4>
+    <div class="bar-chart" id="premiumChart"></div>
+  </div>
+
+  <!-- Tips -->
+  <div class="card">
+    <div class="card-title" style="cursor:default"><span class="ic" style="background:#ecfdf5;color:var(--ok)">💡</span>Tips & Information 提示</div>
+    <div class="info-box blue">
+      <b>Integrated Shield Plans (ISP):</b> MediShield Life only covers Class B2/C wards. For Class B1/A/Private ward coverage, consider adding an ISP from AIA, Great Eastern, NTUC Income, Prudential, or Singlife. ISPs are paid from MediSave + cash.
+    </div>
+    <div class="info-box amber" style="margin-top:8px">
+      <b>MediSave Usage:</b> You can pay your MediShield Life premium and part of your hospital bills from your MediSave account. The withdrawal limit is $450-$900/day depending on the type of treatment.
+    </div>
+  </div>
+</div>
+<footer>
+  MediShield Life rates effective 1 Apr 2025 · Policy year claim limit $200,000 · Source: MOH, CPF Board<br>
+  SmartTools — <a href="../index.html" style="color:var(--pri)">Home</a>
+</footer>
+<script>
+const PREMIUMS=[
+  {min:1,max:20,amt:200},{min:21,max:30,amt:295},{min:31,max:40,amt:503},
+  {min:41,max:50,amt:637},{min:51,max:60,amt:903},{min:61,max:65,amt:1131},
+  {min:66,max:70,amt:1326},{min:71,max:73,amt:1643},{min:74,max:75,amt:1816},
+  {min:76,max:78,amt:2027},{min:79,max:80,amt:2187},{min:81,max:83,amt:2303},
+  {min:84,max:85,amt:2616},{min:86,max:90,amt:2785},{min:91,max:120,amt:2826}
+];
+const WARD_LIMIT={normal:800,normalBonus:200,icu:2200,icuBonus:200};
+const COINSURANCE=[{limit:5000,rate:0.10},{limit:5000,rate:0.05},{limit:Infinity,rate:0.03}];
+
+function parseNum(s){return parseFloat(String(s).replace(/[^0-9.]/g,''))||0}
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
+function fmtD(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtInput(el){const v=parseNum(el.value);if(v>0){const p=el.selectionStart;el.value=fmt(v);try{el.setSelectionRange(p,p)}catch(e){}}}
+function toggleCard(t){t.classList.toggle('open');const b=t.nextElementSibling;if(b.classList.contains('collapsed')){b.classList.remove('collapsed');b.style.maxHeight=b.scrollHeight+'px'}else{b.style.maxHeight=b.scrollHeight+'px';requestAnimationFrame(()=>b.classList.add('collapsed'))}}
+
+function getPremium(age){
+  for(const p of PREMIUMS) if(age>=p.min&&age<=p.max) return p.amt;
+  return PREMIUMS[PREMIUMS.length-1].amt;
+}
+
+function compute(){
+  const age=parseInt(document.getElementById('age').value)||35;
+  const ward=document.getElementById('ward').value;
+  const wardDays=parseInt(document.getElementById('wardDays').value)||0;
+  const icuDays=parseInt(document.getElementById('icuDays').value)||0;
+  const bill=parseNum(document.getElementById('bill').value);
+
+  const premium=getPremium(age);
+  const deductible=age>80?2000:1500;
+  const isSubsidised=ward==='C'||ward==='B2';
+
+  let claimableLimit=0;
+  if(isSubsidised){
+    const normalLimit=wardDays>0?(Math.min(wardDays,2)*(WARD_LIMIT.normal+WARD_LIMIT.normalBonus)+Math.max(wardDays-2,0)*WARD_LIMIT.normal):0;
+    const icuLimit=icuDays>0?(Math.min(icuDays,2)*(WARD_LIMIT.icu+WARD_LIMIT.icuBonus)+Math.max(icuDays-2,0)*WARD_LIMIT.icu):0;
+    claimableLimit=normalLimit+icuLimit;
+  }
+
+  const claimableBill=isSubsidised?Math.min(bill,claimableLimit||bill):bill;
+  let proRatio=1;
+  if(!isSubsidised) proRatio=0;
+
+  const afterProration=Math.round(claimableBill*proRatio);
+  const afterDeductible=Math.max(afterProration-deductible,0);
+
+  let coInsTotal=0,remain=afterDeductible;
+  const coRows=[];
+  for(const tier of COINSURANCE){
+    if(remain<=0) break;
+    const amt=Math.min(remain,tier.limit);
+    const coinsPay=Math.round(amt*tier.rate);
+    coRows.push({bracket:tier.limit===Infinity?'Above $10,000':`$${fmt(coRows.reduce((s,r)=>s+r.amt,0)+1)}-$${fmt(coRows.reduce((s,r)=>s+r.amt,0)+amt)}`,rate:tier.rate,amt,coinsPay});
+    coInsTotal+=coinsPay;
+    remain-=amt;
+  }
+
+  const mslCovers=Math.max(afterDeductible-coInsTotal,0);
+  const youPay=bill-mslCovers;
+  const youPayDeductible=Math.min(afterProration,deductible);
+  const excess=isSubsidised?0:bill;
+
+  const effectiveCover=bill>0?(mslCovers/bill*100):0;
+
+  document.getElementById('summaryGrid').innerHTML=`
+    <div class="sum-card"><div class="sum-val">$${fmt(bill)}</div><div class="sum-lbl">Total Bill 总账单</div></div>
+    <div class="sum-card hl"><div class="sum-val">$${fmt(mslCovers)}</div><div class="sum-lbl">MediShield Covers 终身健保理赔</div></div>
+    <div class="sum-card warn"><div class="sum-val">$${fmt(youPay)}</div><div class="sum-lbl">You Pay 自付额</div></div>
+    <div class="sum-card"><div class="sum-val">${effectiveCover.toFixed(1)}%</div><div class="sum-lbl">Coverage Rate 理赔率</div></div>`;
+
+  let detailHtml=`<h4 style="font-size:14px;color:var(--sec);margin:8px 0 6px">Claim Breakdown 理赔明细</h4>
+    <table><thead><tr><th>Step 步骤</th><th>Amount</th></tr></thead><tbody>
+    <tr><td>1. Total Hospital Bill 总账单</td><td>$${fmt(bill)}</td></tr>`;
+
+  if(!isSubsidised){
+    detailHtml+=`<tr><td style="color:var(--danger)">⚠ Ward Class ${ward} not covered by MediShield Life</td><td style="color:var(--danger)">$0 claimable</td></tr>`;
+    detailHtml+=`</tbody></table>`;
+    detailHtml+=`<div class="info-box amber" style="margin-top:10px"><b>Not Covered:</b> MediShield Life only covers Class B2/C subsidised wards. For Class ${ward} coverage, you need an Integrated Shield Plan (ISP).</div>`;
+  } else {
+    if(claimableLimit>0) detailHtml+=`<tr><td>2. Daily Claim Limit Cap 每日限额上限</td><td>$${fmt(claimableLimit)} (${wardDays}d ward + ${icuDays}d ICU)</td></tr>`;
+    detailHtml+=`<tr><td>3. Claimable Amount 可理赔金额</td><td>$${fmt(afterProration)}</td></tr>
+    <tr><td>4. Less: Deductible 减：免赔额 (age ${age>80?'>80':'≤80'})</td><td style="color:var(--danger)">-$${fmt(youPayDeductible)}</td></tr>
+    <tr><td>5. After Deductible 扣除免赔后</td><td>$${fmt(afterDeductible)}</td></tr>`;
+
+    if(coRows.length>0){
+      detailHtml+=`<tr><td colspan="2" style="font-weight:700;color:var(--sec);padding-top:10px">Co-Insurance 共同保险</td></tr>`;
+      coRows.forEach(r=>{
+        detailHtml+=`<tr><td style="padding-left:16px">Claimable $${fmt(r.amt)} × ${(r.rate*100)}%</td><td style="color:var(--danger)">You pay $${fmt(r.coinsPay)}</td></tr>`;
+      });
+    }
+    detailHtml+=`<tr style="font-weight:700;border-top:2px solid var(--border)"><td>MediShield Life Covers 理赔额</td><td style="color:var(--pri-d)">$${fmt(mslCovers)}</td></tr>
+    <tr style="font-weight:700"><td>You Pay Total 自付总额</td><td style="color:var(--danger)">$${fmt(youPay)}</td></tr>`;
+    detailHtml+=`</tbody></table>`;
+    detailHtml+=`<div style="margin-top:10px;font-size:12px;color:var(--sec)">You pay = Deductible ($${fmt(youPayDeductible)}) + Co-insurance ($${fmt(coInsTotal)}) + Any excess above claim limits</div>`;
+  }
+  document.getElementById('claimDetail').innerHTML=detailHtml;
+
+  // Premium section
+  document.getElementById('premiumSection').innerHTML=`
+    <div class="summary-grid">
+      <div class="sum-card"><div class="sum-val">$${fmt(premium)}</div><div class="sum-lbl">Annual Premium 年保费 (inc. GST)</div></div>
+      <div class="sum-card"><div class="sum-val">$${fmt(Math.round(premium/12))}</div><div class="sum-lbl">Monthly 月均</div></div>
+      <div class="sum-card"><div class="sum-val">Age ${age}</div><div class="sum-lbl">Your Age Group 年龄段</div></div>
+    </div>`;
+
+  // Premium chart
+  const maxP=PREMIUMS[PREMIUMS.length-1].amt;
+  document.getElementById('premiumChart').innerHTML=PREMIUMS.map(p=>{
+    const isActive=age>=p.min&&age<=p.max;
+    const label=p.max>=120?`${p.min}+`:p.min===p.max?`${p.min}`:`${p.min}-${p.max}`;
+    const w=Math.round(p.amt/maxP*100);
+    return `<div class="bar-row${isActive?' active':''}">
+      <span class="bar-label">${label}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${isActive?'var(--pri)':'var(--pri-l)'}">${w>15?'$'+fmt(p.amt):''}</div></div>
+    </div>`;
+  }).join('');
+}
+
+compute();
+</script>
+</body>
+</html>
