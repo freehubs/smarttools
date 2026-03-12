@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SG Rent vs Buy | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#e11d48;--pri-l:#fb7185;--pri-d:#be123c;--pri-bg:#fff1f2;
+  --buy:#6366f1;--rent:#f59e0b;--ok:#10b981;
+  --surface:#fff;--srf-alt:#f8fafc;--border:#e2e8f0;
+  --text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#fff1f2 0%,#fce7f3 50%,#fdf2f8 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:860px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:620px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.card-title .arrow{margin-left:auto;font-size:12px;color:var(--tri);transition:transform .2s}
+.card-title.open .arrow{transform:rotate(180deg)}
+.card-body{overflow:hidden;transition:max-height .3s ease}
+.card-body.collapsed{max-height:0 !important}
+
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.field{flex:1;min-width:170px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;
+  background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(225,29,72,.1)}
+.hint{font-size:11px;color:var(--tri);margin-top:3px}
+
+.range-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.range-row input[type=range]{flex:1;height:6px;-webkit-appearance:none;background:var(--border);border-radius:3px;outline:none}
+.range-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--pri);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.range-val{min-width:80px;font-size:14px;font-weight:700;color:var(--pri-d);text-align:right}
+
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.sum-card{text-align:center;padding:14px 12px;border-radius:10px;border:1px solid var(--border)}
+.sum-card.buy-card{background:#eef2ff;border-color:#c7d2fe}
+.sum-card.rent-card{background:#fffbeb;border-color:#fde68a}
+.sum-card.diff-card{background:var(--pri-bg);border-color:#fecdd3}
+.sum-val{font-size:20px;font-weight:700}
+.sum-card.buy-card .sum-val{color:var(--buy)}
+.sum-card.rent-card .sum-val{color:#b45309}
+.sum-card.diff-card .sum-val{color:var(--pri-d)}
+.sum-lbl{font-size:11px;color:var(--sec);margin-top:2px}
+
+.chart-area{position:relative;margin:16px 0;background:var(--srf-alt);border-radius:10px;border:1px solid var(--border);padding:16px}
+.chart-legend{display:flex;gap:16px;justify-content:center;font-size:12px;color:var(--sec);margin-bottom:10px}
+.chart-legend span{display:flex;align-items:center;gap:5px}
+
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+thead th{padding:8px 8px;text-align:right;font-weight:600;color:var(--sec);border-bottom:2px solid var(--border);font-size:11px}
+thead th:first-child{text-align:left}
+tbody td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}
+tbody td:first-child{text-align:left;font-weight:600}
+tbody tr:hover{background:var(--srf-alt)}
+.winner{font-weight:700}
+
+.sens-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
+.sens-card{padding:12px;border-radius:8px;border:1px solid var(--border);font-size:12px}
+.sens-card b{display:block;margin-bottom:4px;color:var(--sec)}
+
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+@media(max-width:640px){.summary-grid{grid-template-columns:1fr 1fr}.row{flex-direction:column}.field{min-width:0}}
+</style>
+</head>
+<body>
+
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>Rent vs Buy Comparator</h1>
+    <p>新加坡租房 vs 买房对比器 — 30-Year Cost Analysis · Break-Even · Opportunity Cost</p>
+  </header>
+
+  <!-- Buying -->
+  <div class="card">
+    <div class="card-title open" onclick="toggleCard(this)">
+      <span class="ic" style="background:#eef2ff;color:var(--buy)">🏠</span>
+      Buying 买房
+      <span class="arrow">▼</span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field">
+          <label>Purchase Price 购买价 (SGD)</label>
+          <input id="buyPrice" type="text" inputmode="numeric" value="1,500,000" oninput="fmtInput(this);compute()">
+        </div>
+        <div class="field">
+          <label>Property Type 房产类型</label>
+          <select id="propType" onchange="compute()">
+            <option value="condo">Condo 公寓</option>
+            <option value="hdb">HDB 组屋</option>
+            <option value="ec">EC 执行共管公寓</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Down Payment 首付 (%)</label>
+          <input id="downPct" type="number" min="5" max="100" value="25" onchange="compute()" oninput="compute()">
+        </div>
+        <div class="field">
+          <label>Loan Interest Rate 贷款利率 (%)</label>
+          <input id="loanRate" type="number" step="0.1" min="0.5" max="10" value="2.5" onchange="compute()" oninput="compute()">
+        </div>
+        <div class="field">
+          <label>Loan Tenure 贷款年限</label>
+          <input id="loanTenure" type="number" min="5" max="30" value="25" onchange="compute()" oninput="compute()">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Annual Maintenance 年维护费 (SGD)</label>
+          <input id="maintenance" type="text" inputmode="numeric" value="3,600" oninput="fmtInput(this);compute()">
+          <div class="hint">Condo ~$3,600/yr · HDB ~$800/yr</div>
+        </div>
+        <div class="field">
+          <label>Property Tax Rate 房产税率 (%/yr)</label>
+          <input id="propTax" type="number" step="0.1" value="4.0" onchange="compute()" oninput="compute()">
+        </div>
+        <div class="field">
+          <label>Renovation 装修费 (SGD)</label>
+          <input id="reno" type="text" inputmode="numeric" value="50,000" oninput="fmtInput(this);compute()">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Annual Price Appreciation 年增值率 (%)</label>
+          <input id="appreciation" type="number" step="0.5" value="3.0" onchange="compute()" oninput="compute()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renting -->
+  <div class="card">
+    <div class="card-title open" onclick="toggleCard(this)">
+      <span class="ic" style="background:#fffbeb;color:#b45309">🔑</span>
+      Renting 租房
+      <span class="arrow">▼</span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field">
+          <label>Monthly Rent 月租金 (SGD)</label>
+          <input id="rent" type="text" inputmode="numeric" value="3,500" oninput="fmtInput(this);compute()">
+        </div>
+        <div class="field">
+          <label>Annual Rent Increase 年租金涨幅 (%)</label>
+          <input id="rentInc" type="number" step="0.5" value="3.0" onchange="compute()" oninput="compute()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Investment -->
+  <div class="card">
+    <div class="card-title open" onclick="toggleCard(this)">
+      <span class="ic" style="background:#ecfdf5;color:#059669">📈</span>
+      Investment Return 投资回报 (Opportunity Cost)
+      <span class="arrow">▼</span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="field">
+          <label>Expected Annual Return 预期年回报率 (%)</label>
+          <input id="investReturn" type="number" step="0.5" value="5.0" onchange="compute()" oninput="compute()">
+          <div class="hint">Down payment + monthly savings difference could be invested instead</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Holding Period -->
+  <div class="card">
+    <div class="card-title" style="cursor:default">
+      <span class="ic" style="background:var(--pri-bg);color:var(--pri)">⏱️</span>
+      Holding Period 持有年限
+    </div>
+    <div class="range-row">
+      <input type="range" id="holdSlider" min="1" max="30" value="10" oninput="compute()">
+      <span class="range-val" id="holdVal">10 years</span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="card-title" style="cursor:default">
+      <span class="ic" style="background:var(--pri-bg);color:var(--pri)">📊</span>
+      Results 对比结果
+    </div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="chart-area">
+      <div class="chart-legend">
+        <span><span style="display:inline-block;width:12px;height:3px;background:var(--buy);border-radius:2px;vertical-align:middle"></span> Buying Cost 买房成本</span>
+        <span><span style="display:inline-block;width:12px;height:3px;background:var(--rent);border-radius:2px;vertical-align:middle"></span> Renting Cost 租房成本</span>
+      </div>
+      <svg id="chart" width="100%" height="280" viewBox="0 0 800 280"></svg>
+    </div>
+    <details>
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--sec);margin-bottom:8px">Show Year-by-Year Table 逐年明细</summary>
+      <div style="overflow-x:auto"><table id="detailTable"></table></div>
+    </details>
+  </div>
+
+  <!-- Sensitivity -->
+  <div class="card">
+    <div class="card-title" style="cursor:default">
+      <span class="ic" style="background:var(--pri-bg);color:var(--pri)">🎛️</span>
+      Sensitivity Analysis 敏感性分析
+    </div>
+    <div class="sens-grid" id="sensGrid"></div>
+  </div>
+</div>
+
+<footer>
+  BSD auto-calculated · Analysis for reference only; actual costs depend on many factors<br>
+  SmartTools — <a href="../index.html" style="color:var(--pri)">Home</a>
+</footer>
+
+<script>
+function parseNum(s){return parseFloat(String(s).replace(/[^0-9.]/g,''))||0}
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
+function fmtInput(el){const v=parseNum(el.value);if(v>0){const p=el.selectionStart;el.value=fmt(v);try{el.setSelectionRange(p,p)}catch(e){}}}
+
+function toggleCard(t){t.classList.toggle('open');const b=t.nextElementSibling;if(b.classList.contains('collapsed')){b.classList.remove('collapsed');b.style.maxHeight=b.scrollHeight+'px'}else{b.style.maxHeight=b.scrollHeight+'px';requestAnimationFrame(()=>b.classList.add('collapsed'))}}
+
+function calcBSD(price){
+  const brackets=[{l:180000,r:0.01},{l:180000,r:0.02},{l:640000,r:0.03},{l:500000,r:0.04},{l:1500000,r:0.05},{l:Infinity,r:0.06}];
+  let rem=price,bsd=0;
+  for(const b of brackets){if(rem<=0)break;const t=Math.min(rem,b.l);bsd+=t*b.r;rem-=t}
+  return Math.floor(bsd);
+}
+
+function calcMortgage(principal,annualRate,years){
+  const r=annualRate/100/12,n=years*12;
+  if(r===0) return principal/n;
+  return principal*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+}
+
+function runScenario(price,downPct,loanRate,loanTenure,maintenance,propTaxRate,reno,appreciation,rent,rentInc,investReturn,maxYears){
+  const dp=price*downPct/100;
+  const bsd=calcBSD(price);
+  const loanAmt=price-dp;
+  const monthly=calcMortgage(loanAmt,loanRate,loanTenure);
+  const invR=investReturn/100;
+
+  const years=[];
+  let cumBuy=dp+bsd+reno;
+  let cumRent=0;
+  let investPool=dp+bsd+reno;
+  let currentRent=rent;
+  let propValue=price;
+  let loanBal=loanAmt;
+  const r=loanRate/100/12;
+  let breakEven=0;
+
+  for(let yr=1;yr<=maxYears;yr++){
+    const yearlyMortgage=yr<=loanTenure?monthly*12:0;
+    const yearlyMaint=maintenance;
+    const yearlyTax=Math.round(propValue*propTaxRate/100);
+
+    if(yr<=loanTenure){
+      let yrPrin=0;
+      for(let m=0;m<12;m++){
+        const intPart=loanBal*r;
+        const prinPart=monthly-intPart;
+        yrPrin+=prinPart;
+        loanBal-=prinPart;
+      }
+    }
+
+    cumBuy+=yearlyMortgage+yearlyMaint+yearlyTax;
+    propValue*=(1+appreciation/100);
+    const equity=propValue-Math.max(loanBal,0);
+    const netBuyCost=cumBuy-equity+dp;
+
+    const yearlyRent=currentRent*12;
+    cumRent+=yearlyRent;
+    const monthlySaving=Math.max((yearlyMortgage+yearlyMaint+yearlyTax)/12-currentRent,0);
+    investPool=investPool*(1+invR)+monthlySaving*12;
+    const netRentCost=cumRent-investPool+dp+bsd+reno;
+
+    currentRent*=(1+rentInc/100);
+
+    if(breakEven===0&&netBuyCost<netRentCost) breakEven=yr;
+
+    years.push({yr,cumBuy:Math.round(cumBuy),equity:Math.round(equity),netBuy:Math.round(netBuyCost),
+      cumRent:Math.round(cumRent),investPool:Math.round(investPool),netRent:Math.round(netRentCost)});
+  }
+  return {years,breakEven,dp,bsd,monthly:Math.round(monthly)};
+}
+
+function compute(){
+  const price=parseNum(document.getElementById('buyPrice').value);
+  const downPct=parseFloat(document.getElementById('downPct').value)||25;
+  const loanRate=parseFloat(document.getElementById('loanRate').value)||2.5;
+  const loanTenure=parseInt(document.getElementById('loanTenure').value)||25;
+  const maintenance=parseNum(document.getElementById('maintenance').value);
+  const propTaxRate=parseFloat(document.getElementById('propTax').value)||4;
+  const reno=parseNum(document.getElementById('reno').value);
+  const appreciation=parseFloat(document.getElementById('appreciation').value)||3;
+  const rent=parseNum(document.getElementById('rent').value);
+  const rentInc=parseFloat(document.getElementById('rentInc').value)||3;
+  const investReturn=parseFloat(document.getElementById('investReturn').value)||5;
+  const hold=parseInt(document.getElementById('holdSlider').value)||10;
+
+  document.getElementById('holdVal').textContent=hold+' years';
+
+  const res=runScenario(price,downPct,loanRate,loanTenure,maintenance,propTaxRate,reno,appreciation,rent,rentInc,investReturn,30);
+  const atHold=res.years[hold-1]||res.years[res.years.length-1];
+  const diff=atHold.netBuy-atHold.netRent;
+  const winner=diff<0?'Buy':'Rent';
+
+  document.getElementById('summaryGrid').innerHTML=`
+    <div class="sum-card buy-card"><div class="sum-val">$${fmt(atHold.netBuy)}</div><div class="sum-lbl">Net Buying Cost 买房净成本 (${hold}yr)</div></div>
+    <div class="sum-card rent-card"><div class="sum-val">$${fmt(atHold.netRent)}</div><div class="sum-lbl">Net Renting Cost 租房净成本 (${hold}yr)</div></div>
+    <div class="sum-card diff-card"><div class="sum-val">${winner} wins!</div><div class="sum-lbl">Saves $${fmt(Math.abs(diff))} over ${hold} years</div></div>
+    <div class="sum-card" style="background:var(--srf-alt)"><div class="sum-val" style="color:var(--text)">${res.breakEven>0?'Year '+res.breakEven:'30yr+'}</div><div class="sum-lbl">Break-Even 盈亏平衡</div></div>`;
+
+  renderChart(res.years,hold);
+  renderTable(res.years,hold);
+  renderSensitivity(price,downPct,loanRate,loanTenure,maintenance,propTaxRate,reno,appreciation,rent,rentInc,investReturn,hold);
+}
+
+function renderChart(years,hold){
+  const svg=document.getElementById('chart');
+  const W=800,H=260,pad={t:20,r:20,b:30,l:60};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+
+  const allVals=years.flatMap(y=>[y.netBuy,y.netRent]);
+  const minV=Math.min(0,...allVals), maxV=Math.max(...allVals);
+  const range=maxV-minV||1;
+
+  const x=i=>pad.l+(i/(years.length-1))*cw;
+  const y=v=>pad.t+ch-(v-minV)/range*ch;
+
+  let buyPath='', rentPath='';
+  years.forEach((yr,i)=>{
+    const px=x(i), byY=y(yr.netBuy), rtY=y(yr.netRent);
+    buyPath+=(i===0?'M':'L')+px+','+byY;
+    rentPath+=(i===0?'M':'L')+px+','+rtY;
+  });
+
+  const holdX=x(hold-1);
+  const gridLines=5;
+  let gridHtml='';
+  for(let i=0;i<=gridLines;i++){
+    const v=minV+(range/gridLines)*i;
+    const gy=y(v);
+    gridHtml+=`<line x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}" stroke="#e2e8f0" stroke-width="1"/>`;
+    gridHtml+=`<text x="${pad.l-8}" y="${gy+4}" text-anchor="end" font-size="10" fill="#94a3b8">$${(v/1000).toFixed(0)}K</text>`;
+  }
+  for(let i=0;i<30;i+=5){
+    if(i===0) continue;
+    gridHtml+=`<text x="${x(i)}" y="${H-5}" text-anchor="middle" font-size="10" fill="#94a3b8">Y${i+1}</text>`;
+  }
+
+  svg.innerHTML=`${gridHtml}
+    <path d="${buyPath}" fill="none" stroke="var(--buy)" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="${rentPath}" fill="none" stroke="var(--rent)" stroke-width="2.5" stroke-linejoin="round"/>
+    <line x1="${holdX}" y1="${pad.t}" x2="${holdX}" y2="${H-pad.b}" stroke="var(--pri)" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="${holdX}" y="${pad.t-5}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--pri)">Year ${hold}</text>`;
+}
+
+function renderTable(years,hold){
+  document.getElementById('detailTable').innerHTML=`
+    <thead><tr><th>Year</th><th>Cum Buy Cost</th><th>Equity</th><th>Net Buy</th><th>Cum Rent</th><th>Invest Pool</th><th>Net Rent</th><th>Winner</th></tr></thead>
+    <tbody>${years.map(yr=>{
+      const w=yr.netBuy<yr.netRent?'Buy':'Rent';
+      const isCur=yr.yr===hold;
+      return `<tr${isCur?' style="background:#fff1f2;font-weight:600"':''}>
+        <td>Year ${yr.yr}</td><td>$${fmt(yr.cumBuy)}</td><td>$${fmt(yr.equity)}</td><td class="winner" style="color:var(--buy)">$${fmt(yr.netBuy)}</td>
+        <td>$${fmt(yr.cumRent)}</td><td>$${fmt(yr.investPool)}</td><td class="winner" style="color:#b45309">$${fmt(yr.netRent)}</td>
+        <td style="font-weight:700;color:${w==='Buy'?'var(--buy)':'#b45309'}">${w}</td></tr>`;
+    }).join('')}</tbody>`;
+}
+
+function renderSensitivity(price,dp,lr,lt,maint,pt,reno,appr,rent,ri,ir,hold){
+  const scenarios=[
+    {label:'Interest Rate +0.5%',change:()=>runScenario(price,dp,lr+0.5,lt,maint,pt,reno,appr,rent,ri,ir,30)},
+    {label:'Interest Rate -0.5%',change:()=>runScenario(price,dp,Math.max(lr-0.5,0.5),lt,maint,pt,reno,appr,rent,ri,ir,30)},
+    {label:'Appreciation +1%',change:()=>runScenario(price,dp,lr,lt,maint,pt,reno,appr+1,rent,ri,ir,30)},
+    {label:'Appreciation -1%',change:()=>runScenario(price,dp,lr,lt,maint,pt,reno,Math.max(appr-1,0),rent,ri,ir,30)},
+    {label:'Rent +20%',change:()=>runScenario(price,dp,lr,lt,maint,pt,reno,appr,rent*1.2,ri,ir,30)},
+    {label:'Investment Return 8%',change:()=>runScenario(price,dp,lr,lt,maint,pt,reno,appr,rent,ri,8,30)},
+  ];
+
+  document.getElementById('sensGrid').innerHTML=scenarios.map(s=>{
+    const r=s.change();
+    const at=r.years[hold-1];
+    const diff=at.netBuy-at.netRent;
+    const w=diff<0?'Buy':'Rent';
+    return `<div class="sens-card">
+      <b>${s.label}</b>
+      <span style="color:${w==='Buy'?'var(--buy)':'#b45309'};font-weight:700">${w} wins</span> by $${fmt(Math.abs(diff))}<br>
+      Break-even: ${r.breakEven>0?'Year '+r.breakEven:'30yr+'}
+    </div>`;
+  }).join('');
+}
+
+compute();
+</script>
+</body>
+</html>

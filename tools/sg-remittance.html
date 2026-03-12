@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGD/RMB Remittance Comparator | SmartTools</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#0284c7;--pri-l:#38bdf8;--pri-d:#0369a1;--pri-bg:#f0f9ff;
+  --best:#10b981;--worst:#ef4444;--warn:#f59e0b;
+  --surface:#fff;--srf-alt:#f8fafc;--border:#e2e8f0;
+  --text:#1e293b;--sec:#64748b;--tri:#94a3b8;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 50%,#f0f9ff 100%);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:800px;margin:0 auto;padding:32px 20px 64px}
+header{text-align:center;margin-bottom:24px}
+header h1{font-size:26px;font-weight:700;color:var(--pri-d);margin-bottom:4px}
+header p{color:var(--sec);font-size:13px;max-width:600px;margin:0 auto}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 24px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+
+.row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.field{flex:1;min-width:170px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--sec);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;
+  background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(2,132,199,.12)}
+.hint{font-size:11px;color:var(--tri);margin-top:3px}
+
+.toggle-group{display:flex;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.toggle-group button{flex:1;padding:10px 8px;border:none;background:var(--srf-alt);font-size:13px;font-weight:600;
+  color:var(--sec);cursor:pointer;font-family:inherit;transition:all .15s}
+.toggle-group button.active{background:var(--pri);color:#fff}
+
+.provider-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.prov-row{display:grid;grid-template-columns:120px 1fr 1fr 1fr;gap:10px;align-items:center;padding:12px 14px;background:var(--srf-alt);border-radius:10px;border:1.5px solid var(--border);font-size:13px;transition:border-color .2s}
+.prov-row.best{border-color:var(--best);background:#ecfdf5}
+.prov-row.worst{border-color:#fecaca;background:#fff1f2}
+.prov-name{font-weight:700;display:flex;align-items:center;gap:6px}
+.prov-name .rank{width:22px;height:22px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--sec);flex-shrink:0}
+.prov-row.best .rank{background:var(--best);color:#fff}
+.prov-row input{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--surface);font-family:inherit;text-align:right}
+.prov-row input:focus{border-color:var(--pri);outline:none}
+
+.result-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.res-card{display:grid;grid-template-columns:40px 120px 1fr 140px;gap:12px;align-items:center;padding:14px 16px;background:var(--surface);border-radius:10px;border:1.5px solid var(--border);transition:all .2s}
+.res-card:first-child{border-color:var(--best);background:#ecfdf5;box-shadow:0 2px 8px rgba(16,185,129,.12)}
+.res-card:last-child{border-color:#fecaca;background:#fff5f5}
+.rc-rank{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background:var(--pri)}
+.res-card:first-child .rc-rank{background:var(--best)}
+.rc-name{font-weight:700;font-size:14px}
+.rc-detail{font-size:12px;color:var(--sec)}
+.rc-amount{text-align:right}
+.rc-amount .big{font-size:20px;font-weight:700;color:var(--pri-d)}
+.res-card:first-child .rc-amount .big{color:var(--best)}
+.rc-amount .small{font-size:11px;color:var(--sec)}
+
+.bar-chart{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+.bar-row{display:flex;align-items:center;gap:10px;font-size:12px}
+.bar-label{width:100px;text-align:right;font-weight:600;flex-shrink:0}
+.bar-track{flex:1;height:24px;background:var(--border);border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;font-weight:700;color:#fff;transition:width .4s ease}
+.bar-val{min-width:70px;font-weight:700;text-align:left}
+
+.tips{padding:16px;background:var(--pri-bg);border-radius:10px;border:1px solid #bae6fd;font-size:13px;color:var(--pri-d)}
+.tips b{display:block;margin-bottom:6px}
+.tips ul{margin:0;padding-left:18px}
+.tips li{margin-bottom:4px}
+
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+thead th{padding:8px 8px;text-align:right;font-weight:600;color:var(--sec);border-bottom:2px solid var(--border);font-size:11px}
+thead th:first-child{text-align:left}
+tbody td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}
+tbody td:first-child{text-align:left;font-weight:600}
+tbody tr:hover{background:var(--srf-alt)}
+
+footer{text-align:center;margin-top:36px;font-size:12px;color:var(--sec);line-height:1.8}
+@media(max-width:640px){.prov-row{grid-template-columns:90px 1fr 1fr}.res-card{grid-template-columns:32px 90px 1fr 100px}.row{flex-direction:column}.field{min-width:0}}
+</style>
+</head>
+<body>
+
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)">
+  <div style="max-width:800px;margin:0 auto;display:flex;align-items:center;gap:12px">
+    <a href="../index.html" style="font-size:1.15rem;font-weight:700;color:var(--text);text-decoration:none">&#9881; SmartTools</a>
+    <a href="../index.html" style="font-size:.9rem;color:var(--sec);text-decoration:none">&larr; All Tools</a>
+  </div>
+</div>
+
+<div class="container">
+  <header>
+    <h1>SGD/RMB Remittance Comparator</h1>
+    <p>新加坡汇款比较器 — 对比 Wise · Instarem · Remitly · DBS · OCBC · Western Union</p>
+  </header>
+
+  <!-- Transfer Setup -->
+  <div class="card">
+    <div class="card-title">
+      <span class="ic" style="background:var(--pri-bg);color:var(--pri)">💸</span>
+      Transfer Setup 汇款设置
+    </div>
+    <div class="toggle-group" id="dirToggle">
+      <button data-v="sgd2cny" class="active" onclick="setDir('sgd2cny')">SGD → CNY</button>
+      <button data-v="cny2sgd" onclick="setDir('cny2sgd')">CNY → SGD</button>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label id="amtLabel">Send Amount 汇出金额 (SGD)</label>
+        <input id="sendAmt" type="text" inputmode="numeric" value="5,000" oninput="fmtInput(this);compute()">
+      </div>
+      <div class="field">
+        <label>Mid-Market Rate 中间汇率 (SGD→CNY)</label>
+        <input id="midRate" type="number" step="0.0001" value="5.4200" onchange="compute()" oninput="compute()">
+        <div class="hint">Update with today's rate from Google / XE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Provider Rates -->
+  <div class="card">
+    <div class="card-title">
+      <span class="ic" style="background:var(--pri-bg);color:var(--pri)">🏦</span>
+      Provider Rates 服务商费率 <span style="font-weight:400;font-size:12px;color:var(--tri);margin-left:auto">Click to edit 可编辑</span>
+    </div>
+    <div style="display:grid;grid-template-columns:120px 1fr 1fr;gap:10px;padding:0 14px;margin-bottom:6px;font-size:11px;color:var(--tri);font-weight:600">
+      <span>Provider</span><span style="text-align:right">Fee (SGD)</span><span style="text-align:right">Rate (SGD→CNY)</span>
+    </div>
+    <div class="provider-grid" id="providerGrid"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="card">
+    <div class="card-title">
+      <span class="ic" style="background:var(--pri-bg);color:var(--pri)">📊</span>
+      Results 对比结果
+    </div>
+    <div class="result-cards" id="resultCards"></div>
+    <h4 style="font-size:14px;color:var(--sec);margin:16px 0 6px">Visual Comparison 可视化对比</h4>
+    <div class="bar-chart" id="barChart"></div>
+    <details style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--sec);margin-bottom:8px">Show Detailed Table 详细对比表</summary>
+      <div style="overflow-x:auto"><table id="detailTable"></table></div>
+    </details>
+  </div>
+
+  <!-- Tips -->
+  <div class="card">
+    <div class="tips">
+      <b>Tips for Better Rates 汇款省钱技巧</b>
+      <ul>
+        <li>Transfer larger amounts to reduce per-unit fee impact 大额转账可摊薄手续费</li>
+        <li>Use PayNow / bank transfer to fund (avoid card fees) 使用 PayNow 充值，避免信用卡手续费</li>
+        <li>Check for first-transfer promotions 查看首次汇款优惠（Wise/Instarem 常有）</li>
+        <li>Compare rates at transfer time — they change throughout the day 汇率实时变动，转账前再比较一次</li>
+        <li>Instarem often offers zero-fee transfers with competitive rates Instarem 经常免手续费且汇率有竞争力</li>
+        <li>Wise uses mid-market rate but charges a transparent fee Wise 使用中间汇率但收取透明手续费</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Rates are indicative defaults — update with today's actual rates for accurate comparison<br>
+  SmartTools — <a href="../index.html" style="color:var(--pri)">Home</a>
+</footer>
+
+<script>
+let direction='sgd2cny';
+
+const PROVIDERS=[
+  {id:'wise',name:'Wise',feePct:0.0119,feeFixed:0,rateMarkup:0,color:'#68D391'},
+  {id:'instarem',name:'Instarem',feePct:0,feeFixed:0,rateMarkup:0.0015,color:'#7C3AED'},
+  {id:'remitly',name:'Remitly',feePct:0,feeFixed:0,rateMarkup:0.008,color:'#2563EB'},
+  {id:'dbs',name:'DBS Remit',feePct:0,feeFixed:5,rateMarkup:0.012,color:'#DC2626'},
+  {id:'ocbc',name:'OCBC',feePct:0,feeFixed:10,rateMarkup:0.010,color:'#EA580C'},
+  {id:'wu',name:'Western Union',feePct:0,feeFixed:8,rateMarkup:0.015,color:'#CA8A04'}
+];
+
+function parseNum(s){return parseFloat(String(s).replace(/[^0-9.]/g,''))||0}
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0})}
+function fmtD(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtR(n){return n.toFixed(4)}
+function fmtInput(el){const v=parseNum(el.value);if(v>0){const p=el.selectionStart;el.value=fmt(v);try{el.setSelectionRange(p,p)}catch(e){}}}
+
+function setDir(d){
+  direction=d;
+  document.querySelectorAll('#dirToggle button').forEach(b=>b.classList.toggle('active',b.dataset.v===d));
+  document.getElementById('amtLabel').textContent=d==='sgd2cny'?'Send Amount 汇出金额 (SGD)':'Send Amount 汇出金额 (CNY)';
+  compute();
+}
+
+function initProviders(){
+  const midRate=parseFloat(document.getElementById('midRate').value)||5.42;
+  document.getElementById('providerGrid').innerHTML=PROVIDERS.map(p=>{
+    const fee=p.feeFixed>0?p.feeFixed.toFixed(2):'0.00';
+    const rate=fmtR(midRate*(1-p.rateMarkup));
+    return `<div class="prov-row" id="prov_${p.id}">
+      <div class="prov-name"><span class="rank">—</span>${p.name}</div>
+      <input id="fee_${p.id}" type="number" step="0.01" value="${fee}" onchange="compute()" oninput="compute()" title="Fee in SGD">
+      <input id="rate_${p.id}" type="number" step="0.0001" value="${rate}" onchange="compute()" oninput="compute()" title="Exchange rate">
+    </div>`;
+  }).join('');
+}
+
+function compute(){
+  const sendAmt=parseNum(document.getElementById('sendAmt').value);
+  const midRate=parseFloat(document.getElementById('midRate').value)||5.42;
+
+  const results=PROVIDERS.map(p=>{
+    const fee=parseFloat(document.getElementById('fee_'+p.id).value)||0;
+    const rate=parseFloat(document.getElementById('rate_'+p.id).value)||midRate;
+
+    let received, effectiveRate, costSGD;
+    if(direction==='sgd2cny'){
+      const netSend=sendAmt-fee;
+      received=netSend*rate;
+      effectiveRate=sendAmt>0?received/sendAmt:0;
+      costSGD=fee+(midRate-rate)*netSend/midRate;
+    } else {
+      received=sendAmt/rate-fee;
+      effectiveRate=sendAmt>0?sendAmt/received:0;
+      costSGD=fee+sendAmt*(1/rate-1/midRate);
+    }
+
+    return {...p,fee,rate,received:Math.max(received,0),effectiveRate,costSGD:Math.max(costSGD,0)};
+  });
+
+  results.sort((a,b)=>b.received-a.received);
+
+  const best=results[0].received, worst=results[results.length-1].received;
+  const recvCurrency=direction==='sgd2cny'?'CNY':'SGD';
+
+  // Ranked cards
+  document.getElementById('resultCards').innerHTML=results.map((r,i)=>{
+    const savings=r.received-worst;
+    return `<div class="res-card">
+      <div class="rc-rank" style="background:${i===0?'var(--best)':i===results.length-1?'var(--worst)':'var(--pri)'}">${i+1}</div>
+      <div><div class="rc-name">${r.name}</div><div class="rc-detail">Fee: $${fmtD(r.fee)} · Rate: ${fmtR(r.rate)}</div></div>
+      <div class="rc-detail">Cost: $${fmtD(r.costSGD)} SGD${savings>0?` · Saves ¥${fmt(Math.round(savings))} vs worst`:''}</div>
+      <div class="rc-amount"><div class="big">${direction==='sgd2cny'?'¥':'$'}${fmtD(r.received)}</div><div class="small">${recvCurrency} received</div></div>
+    </div>`;
+  }).join('');
+
+  // Bar chart
+  const maxRecv=Math.max(...results.map(r=>r.received),1);
+  const minRecv=Math.min(...results.map(r=>r.received));
+  const barMin=minRecv*0.98;
+  document.getElementById('barChart').innerHTML=results.map((r,i)=>{
+    const pct=maxRecv>barMin?((r.received-barMin)/(maxRecv-barMin)*100):100;
+    return `<div class="bar-row">
+      <span class="bar-label">${r.name}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(pct,5)}%;background:${r.color}">${direction==='sgd2cny'?'¥':'$'}${fmtD(r.received)}</div></div>
+    </div>`;
+  }).join('');
+
+  // Update provider row styling
+  PROVIDERS.forEach(p=>{
+    const el=document.getElementById('prov_'+p.id);
+    el.classList.remove('best','worst');
+    if(results[0].id===p.id) el.classList.add('best');
+    if(results[results.length-1].id===p.id) el.classList.add('worst');
+    const rank=results.findIndex(r=>r.id===p.id)+1;
+    el.querySelector('.rank').textContent=rank;
+  });
+
+  // Detail table
+  document.getElementById('detailTable').innerHTML=`
+    <thead><tr><th>Rank</th><th>Provider</th><th>Fee (SGD)</th><th>Rate</th><th>${recvCurrency} Received</th><th>Eff. Rate</th><th>Cost (SGD)</th></tr></thead>
+    <tbody>${results.map((r,i)=>`<tr${i===0?' style="background:#ecfdf5;font-weight:600"':''}>
+      <td>#${i+1}</td><td>${r.name}</td><td>$${fmtD(r.fee)}</td><td>${fmtR(r.rate)}</td>
+      <td style="font-weight:700">${direction==='sgd2cny'?'¥':'$'}${fmtD(r.received)}</td>
+      <td>${fmtR(r.effectiveRate)}</td><td>$${fmtD(r.costSGD)}</td>
+    </tr>`).join('')}</tbody>`;
+}
+
+initProviders();
+compute();
+</script>
+</body>
+</html>
